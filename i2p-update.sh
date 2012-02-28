@@ -17,9 +17,9 @@ I2P_URL="mtn.i2p2.de"
 KEY="" # Key for signatures using either the key name or the key hash
 
 # see install_archive()
-I2P_VER="0.8.12"
+I2P_VER="0.8.13"
 I2P_AURL="https://i2p.googlecode.com/files"
-SHA256="019d6018e7093650cf67fd883b0cf0f12aa2f4f0cddc5ef6a08e6147af07f142"
+SHA256="bdd510cc47b2cd78aa8d994e27694185c1f2deb48b049d61a93a795932ce5712"
 
 #[ FUNCTIONS ]#
 usage() {
@@ -121,7 +121,7 @@ install_mtn() {
         cd i2p.i2p
         if [[ $_new_install ]]; then
             ant installer-linux
-            sudo mkdir -p $I2P_BIN_PATH ; sudo mv -v i2pinstall.exe $I2P_BIN_PATH ; cd $I2P_BIN_PATH
+            sudo mkdir -p $I2P_BIN_PATH ; sudo mv -v i2pinstall*.jar $I2P_BIN_PATH ; cd $I2P_BIN_PATH
             msg "Starting interactive installer..."
             sudo java -jar i2pinstall*.jar -console
         else
@@ -145,9 +145,9 @@ cd $BASEDIR
     sudo $I2P_BIN_PATH/i2prouter stop
     ./build${_ARCH}.sh ; _E=$? ; check_return "./build${_ARCH}.sh java wrapper"
     strip --strip-unneeded bin/wrapper lib/libwrapper.so
-        sudo install -m 644 bin/wrapper $I2P_BIN_PATH/i2psvc
-        sudo install -m 644 lib/wrapper.jar $I2P_BIN_PATH/lib
-        sudo install -m 755 lib/libwrapper.so $I2P_BIN_PATH/lib
+        sudo install -v -m 644 bin/wrapper $I2P_BIN_PATH/i2psvc
+        sudo install -v -m 644 lib/wrapper.jar $I2P_BIN_PATH/lib
+        sudo install -v -m 755 lib/libwrapper.so $I2P_BIN_PATH/lib
     restart_router
 }
 
