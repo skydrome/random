@@ -9,8 +9,8 @@ trap 'echo " Interrupt detected... Exiting."; exit 1' SIGINT
 I2P_BIN_PATH="/opt/i2p"
 I2P_USER="i2p"
 
-#I2P_URL="mtn.i2p2.de"
-I2P_URL="mtn.i2p-projekt.de" # This mirror is ususally faster
+I2P_URL="mtn.i2p2.de"
+#I2P_URL="mtn.i2p-projekt.de"
 #I2P_URL="mtn.i2pproject.net"
 #I2P_URL="127.0.0.1:8998"
 
@@ -18,7 +18,7 @@ KEY="" # Key for signatures using either the key name or the key hash
 
 # see install_archive()
 I2P_VER="0.8.12"
-I2P_URL="https://i2p.googlecode.com/files"
+I2P_AURL="https://i2p.googlecode.com/files"
 SHA256="019d6018e7093650cf67fd883b0cf0f12aa2f4f0cddc5ef6a08e6147af07f142"
 
 #[ FUNCTIONS ]#
@@ -31,7 +31,6 @@ cat <<EOF
  -a, --archive       Download "${I2P_URL}/i2psource_${VER}.tar.bz2"
      --archiveupdate   ^ but perform an update
  -f, --force         Force compile even if source hasn't changed
- -h, --help          Show this screen
  -j, --java-wrapper  Compile the java wrapper from source
  -r, --restart       Restart I2P after updating
 
@@ -72,8 +71,8 @@ restart_router() {
     fi
 }
 install_archive() {
-    [[ -f i2psource_${I2P_VER}.tar.bz2 ]] || wget "${I2P_URL}/i2psource_${I2P_VER}.tar.bz2"
-    [[ -f i2psource_${I2P_VER}.tar.bz2.sig ]] || wget "${I2P_URL}/i2psource_${I2P_VER}.tar.bz2.sig"
+    [[ -f i2psource_${I2P_VER}.tar.bz2 ]] || wget "${I2P_AURL}/i2psource_${I2P_VER}.tar.bz2"
+    [[ -f i2psource_${I2P_VER}.tar.bz2.sig ]] || wget "${I2P_AURL}/i2psource_${I2P_VER}.tar.bz2.sig"
 
     msg "Verifying checksum..."
     echo "$SHA256  i2psource_${I2P_VER}.tar.bz2" > SHA256SUM
