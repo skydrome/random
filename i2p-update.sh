@@ -18,7 +18,7 @@ KEY="" # Key for signatures using either the key name or the key hash
 
 # see install_archive()
 I2P_VER="0.8.13"
-I2P_AURL="https://i2p.googlecode.com/files"
+I2P_AURL="http://mirror.i2p2.de"
 SHA256="bdd510cc47b2cd78aa8d994e27694185c1f2deb48b049d61a93a795932ce5712"
 
 #[ FUNCTIONS ]#
