@@ -1,22 +1,22 @@
 #!/bin/bash
-# Script Name: sandfox    http://igurublog.wordpress.com/downloads/script-sandfox/ 
+# Script Name: sandfox    http://igurublog.wordpress.com/downloads/script-sandfox/
 # Requires: inotify-tools
 # License: GNU GENERAL PUBLIC LICENSE Version 3 http://www.gnu.org/licenses/gpl-3.0.txt
 
 help ()
 {
 cat << EOF
-sandfox version 1.1.2
+sandfox version 1.1.3
 Usage: sandfox [OPTIONS] [COMMAND [ARG]...]
 Runs COMMAND as a normal user within a chroot jail sandbox with limited
 access to the filesystem.  Supports profiles for apps and includes a default
-Firefox profile. Must be run as root when creating sandbox.  Examples:  
+Firefox profile. Must be run as root when creating sandbox.  Examples:
  sudo sandfox firefox     # Runs Firefox in a sandbox
  sudo sandfox bash        # Shell to explore a sandbox
 OPTIONS:
 --bindro TARGET           Include TARGET (a file or folder) in the sandbox
                             bind-mounting it as a read-only filesystem
---bind TARGET             Include TARGET (a file or folder) in the sandbox 
+--bind TARGET             Include TARGET (a file or folder) in the sandbox
                             with same ownership and permissions when possible
 --copy TARGET             Place a disposable copy of TARGET (a file or folder)
                             in the sandbox
@@ -24,7 +24,7 @@ OPTIONS:
                             by bind-mounting an empty file or folder onto it
                             Effectively hides the real TARGET from the sandbox
                             Also provides a writable dummy folder
---profile PROFILE         Load PROFILE (a profile name or pathname).  By 
+--profile PROFILE         Load PROFILE (a profile name or pathname).  By
                             default profiles are stored in $defaultprofolder
 --make                    Force creation or update of a sandbox (make is
                             implied if you specify binds or profiles)
@@ -84,7 +84,7 @@ processopt () {   # $1 $2
     shifts=2
     if [ "${opt:0:2}" = "--" ]; then
         opt="${opt:2}"
-    fi  
+    fi
     case "$opt" in
         help | -help | -h )
             help
@@ -295,14 +295,14 @@ randhex4()  # generate a four digit random hex number
 }
 
 rmbox () {   # $1=mnt folder to remove
-    if [ "$1" = "" ]; then 
+    if [ "$1" = "" ]; then
         return
     elif [ ! -d "$1" ]; then
         return
     fi
     cleanpath="$1"
     IFS=$'\n'
-    
+
     # find dbus daemon(s) running in sandbox(s)
     # If DBUS_SESSION_BUS_ADDRESS is not provided, firefox will
     # launch a dbus session inside the sandbox.  This needs to be killed
@@ -446,7 +446,7 @@ sandmount () {    # $1=type  $2=source  $3=target
                 if [ "$1" = "bindro" ]; then
                     log "sandfox: Warning: $2 cannot be mounted ro - mounted rw"
                 fi
-            fi  
+            fi
             test=`mount | grep " on $3 type "`
             if [ "$test" = "" ] || (( merr1 + merr2 != 0 )); then
                 log "sandfox: Error: $1 mount failed on $3" "quiet"
@@ -525,7 +525,7 @@ boxstatus () {    # $1 =box name OR "" for all
     IFS=" "
 }
 
-mkprofiles () { 
+mkprofiles () {
     # profile folder
     if [ "$profolder" = "" ]; then
         profolder="$defaultprofolder"
@@ -613,7 +613,7 @@ EOF
         cat << EOF > "$profolder/firefox.profile"
 # Sandfox Firefox Profile
 #
-# Note that default.profile is always loaded in addition to other profiles 
+# Note that default.profile is always loaded in addition to other profiles
 #
 # For instructions consult http://igurublog.wordpress.com/downloads/script-sandfox/
 # OPTION
@@ -641,6 +641,7 @@ bind=/tmp
 bindro=/usr
 bindro=/var/lib
 hide=/var/lib/mlocate
+bindro=/run/resolvconf   # used by Firefox for DNS support
 
 # required by alsa for Flash sound
 bindro=/dev/snd
@@ -666,7 +667,7 @@ bind=/home/\$user/.java
 # To find out what other binds you may need, run 'env' in a shell as user
 #       and examine the values of GTK2_RC_FILES and GTK_RC_FILES and XCURSOR_THEME
 # Note: The bind for kdeglobals below is a limited privacy risk, as KDE4 stores
-#       recent file and folder names in this file.  You can clean this file with 
+#       recent file and folder names in this file.  You can clean this file with
 #       kscrubber:  http://igurublog.wordpress.com/downloads/script-kscrubber/
 #       or don't bind it, but your theme may not work in Firefox
 bind=/home/\$user/.config/gtk-2.0
@@ -675,14 +676,14 @@ bindro=/home/\$user/.fonts
 bind=/home/\$user/.gtkrc-2.0
 bind=/home/\$user/.gtkrc-2.0-kde4
 bind=/home/\$user/.kde/share/config/gtkrc
-bind=/home/\$user/.kde/share/config/gtkrc-2.0      
+bind=/home/\$user/.kde/share/config/gtkrc-2.0
 bindro=/home/\$user/.kde/share/config/kdeglobals
 bind=/home/\$user/.kde4/share/config/gtkrc
-bind=/home/\$user/.kde4/share/config/gtkrc-2.0      
+bind=/home/\$user/.kde4/share/config/gtkrc-2.0
 bindro=/home/\$user/.kde4/share/config/kdeglobals
 bindro=/home/\$user/.gtkrc-2.0-kde
 bind=/home/\$user/.kde3/share/config/gtkrc
-bind=/home/\$user/.kde3/share/config/gtkrc-2.0      
+bind=/home/\$user/.kde3/share/config/gtkrc-2.0
 bindro=/home/\$user/.kde3/share/config/kdeglobals
 bindro=/home/\$user/.Xdefaults  # for cursor theme
 bindro=/home/\$user/.Xauthority
@@ -707,7 +708,7 @@ EOF
         cat << EOF > "$profolder/skype.profile"
 # Sandfox Skype Profile
 #
-# Note that default.profile is always loaded in addition to other profiles 
+# Note that default.profile is always loaded in addition to other profiles
 #
 # For instructions consult http://igurublog.wordpress.com/downloads/script-sandfox/
 # OPTION
@@ -735,7 +736,7 @@ bind=/usr/share/skype  # Gentoo users may need to disable this bind
 bind=/opt/skype
 
 # Following only needed if all of /tmp not bound above
-# copy=/tmp/.ICE-unix           
+# copy=/tmp/.ICE-unix
 # copy=/tmp/.X11-unix/X0
 # bind=/tmp/pulse-*/native
 
@@ -762,7 +763,7 @@ EOF
         cat << EOF > "$profolder/google-earth.profile"
 # Sandfox Google-Earth Profile
 #
-# Note that default.profile is always loaded in addition to other profiles 
+# Note that default.profile is always loaded in addition to other profiles
 #
 # For instructions consult http://igurublog.wordpress.com/downloads/script-sandfox/
 # OPTION
@@ -1149,7 +1150,7 @@ if (( optmake == 1 )) && [ "$runuser" = "root" ]; then
     # default folders
     mkdir -p "$mnt"
     chown root:root "$mnt"
-    chmod go+rx,go-w "$mnt" 
+    chmod go+rx,go-w "$mnt"
     mkdir "$sand"
     chown root:root "$sand"
     chmod go+rx,go-w "$sand"
@@ -1158,7 +1159,7 @@ if (( optmake == 1 )) && [ "$runuser" = "root" ]; then
         exit 3
     fi
 
-    # check for required binds 
+    # check for required binds
     bindtmp=0
     bindbin=0
     bindetc=0
@@ -1327,7 +1328,7 @@ if (( optmake == 1 )) && [ "$runuser" = "root" ]; then
                                     # file copy/hide
                                     if [ "$b" = "copy" ]; then
                                         # copy
-                                        if [ ! -e "$sand$curb" ]; then                              
+                                        if [ ! -e "$sand$curb" ]; then
                                             mdir=`dirname "$curb"`
                                             mkmount "$mdir"
                                             log ">>> cp -a \"$curb\" \"$sand$curb\"" "verb"
@@ -1368,7 +1369,7 @@ if (( optmake == 1 )) && [ "$runuser" = "root" ]; then
             verb="--verbose"
         else
             verb=""
-        fi      
+        fi
         mkdir -p "$eventsfolder"
         chown root:root "$eventsfolder" 2> /dev/null
         chmod ugo+rwx,+t "$eventsfolder" 2> /dev/null
@@ -1417,7 +1418,7 @@ if [ "$bcmd" != "" ]; then
                     dname=`basename "$d"`
                     test=`ps -u $user -o "%U %a" | grep -v "grep" \
                           | grep " .*sandfox .*--daemon .*$d[[:blank:]]*$"`
-                    if [ "$test" != "" ]; then 
+                    if [ "$test" != "" ]; then
                         examples="$examples  sandfox --sandbox $dname $bcmd\n"
                         dgood="$dname"
                         if [ "$dname" = "$bprog" ]; then
@@ -1444,7 +1445,7 @@ if [ "$bcmd" != "" ]; then
             fi
         fi
     fi
-    
+
     # Check if firefox already running
     if [ "${bcmd%% *}" = "firefox" ]; then
         testrunning=`ps -u $user -o "%U %a" | grep -v "grep" | grep -v "sandfox" \
@@ -1453,7 +1454,7 @@ if [ "$bcmd" != "" ]; then
             log "sandfox: Warning: An instance of ${bcmd%% *} is already running"
         fi
     fi
-        
+
     if [ "$runuser" = "root" ]; then
         # start directly
         if (( optshell == 1 )) || [ "$bprog" = "bash" ]; then
@@ -1520,6 +1521,7 @@ fi
 exit
 
 # CHANGELOG:
+# 1.1.3:  added bindro /run/resolvconf to default Firefox profile
 # 1.1.2:  accomodate change to remount bind usage
 #         accomodate change to mtab bind mounts showing type
 #         added /dev/nvidia0 & /dev/nvidiactl binds to default profiles
