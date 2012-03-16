@@ -43,10 +43,6 @@ msg() {
     echo -e "\n\e[1;31m--->\e[1;32m $1 \e[0m"
 }
 
-[[ $(type -P "ant") ]] || { msg "You need apache-ant to compile the I2P sources\n"
-                            exit 1; }
-[[ $UID = 0 ]] && ( msg "\e[1;31mYOU ARE RUNNING AS ROOT USER!\e[1;32m You probably dont want to do this!"
-                    msg "Waiting 10 seconds to continue anyways...\n"; sleep 10 )
 BASEDIR=$(pwd)
 while [[ $# > 0 ]]; do
     case "$1" in
@@ -60,6 +56,11 @@ while [[ $# > 0 ]]; do
     esac
     shift
 done
+
+[[ $(type -P "ant") ]] || { msg "You need apache-ant to compile the I2P sources\n"
+                            exit 1; }
+[[ $UID = 0 ]] && ( msg "\e[1;31mYOU ARE RUNNING AS ROOT USER!\e[1;32m You probably dont want to do this!"
+                    msg "Waiting 10 seconds to continue anyways...\n"; sleep 10 )
 
 check_return() {
     if [[ "$_E" != 0 ]]; then
@@ -138,7 +139,7 @@ install_mtn() {
     fi
 }
 install_wrapper() {
-_VER="3.5.13"
+_VER="3.5.14"
 [[ $(uname -m) = "64" ]] && _ARCH="64" || _ARCH="32"
 cd $BASEDIR
     if [[ ! -d "wrapper_${_VER}_src" ]]; then
