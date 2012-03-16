@@ -9,8 +9,8 @@ trap 'echo " Interrupt detected... Exiting."; exit 1' SIGINT
 I2P_BIN_PATH="/opt/i2p"
 I2P_USER="i2p"
 
-I2P_URL="mtn.i2p2.de"
-#I2P_URL="mtn.i2p-projekt.de"
+#I2P_URL="mtn.i2p2.de"
+I2P_URL="mtn.i2p-projekt.de"
 #I2P_URL="mtn.i2pproject.net"
 #I2P_URL="127.0.0.1:8998"
 
@@ -30,6 +30,7 @@ cat <<EOF
  options:
  -a, --archive       Download "${I2P_URL}/i2psource_${VER}.tar.bz2"
      --archiveupdate   ^ but perform an update
+ -d, --no-build      Download source ONLY, dont build
  -f, --force         Force compile even if source hasn't changed
  -j, --java-wrapper  Compile the java wrapper from source
  -r, --restart       Restart I2P after updating
@@ -42,6 +43,8 @@ msg() {
     echo -e "\n\e[1;31m--->\e[1;32m $1 \e[0m"
 }
 
+[[ $(type -P "ant") ]] || { msg "You need apache-ant to compile the I2P sources\n"
+                            exit 1; }
 [[ $UID = 0 ]] && ( msg "\e[1;31mYOU ARE RUNNING AS ROOT USER!\e[1;32m You probably dont want to do this!"
                     msg "Waiting 10 seconds to continue anyways...\n"; sleep 10 )
 BASEDIR=$(pwd)
@@ -49,6 +52,7 @@ while [[ $# > 0 ]]; do
     case "$1" in
         -a|--archive) opt_use_archive=1 ;;
         --archiveupdate) opt_use_archive=update ;;
+        -d|--no-build) opt_no_build=1 ;;
         -f|--force) opt_force_compile=1 ;;
         -j|--java-wrapper) opt_compile_wrapper=1 ;;
         -r|--restart) opt_restart=1 ;;
@@ -86,6 +90,7 @@ install_archive() {
     else check_return "gpg --verify"
     fi
 
+    [[ $opt_no_build ]] && exit 0
     msg "Starting compile..."
     tar -xjf i2psource_${I2P_VER}.tar.bz2 && cd i2p-${I2P_VER}
     if [[ $opt_use_archive = 'update' ]]; then
@@ -107,7 +112,6 @@ install_mtn() {
         mtn db init --db=i2p.mtn && md5sum i2p.mtn > MD5SUM
         mtn --db=i2p.mtn -k "$KEY" pull "$I2P_URL" i2p.i2p
         mtn --db=i2p.mtn checkout --branch=i2p.i2p
-        wget http://dist.codehaus.org/jetty/jetty-5.1.x/jetty-5.1.15.tgz -O i2p.i2p/apps/jetty/jetty-5.1.15.tgz
     else
         msg "Checking for updates..."
         md5sum i2p.mtn > MD5SUM
@@ -117,6 +121,7 @@ install_mtn() {
     md5sum --check --status MD5SUM || hash_fail=1
 
     if [[ $hash_fail || $opt_force_compile ]]; then
+        [[ $opt_no_build ]] && exit 0
         msg "Starting compile..."
         cd i2p.i2p
         if [[ $_new_install ]]; then
