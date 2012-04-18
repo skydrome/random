@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 
-#[ Description ]
-# Automatic MITM (arp poisoning) shell script that features tools like sslstrip,
-# dsniff and ettercap. The script collects all packets, including SSL traffic
-# collected with sslstrip and logs all the URLs using uslsnarf from dsniff collection.
+#[ Description
+#|  Automatic MITM (arp poisoning) shell script that collects
+#|  all packets, including SSL traffic collected with sslstrip
+#[  and logs all the URLs using uslsnarf from dsniff collection.
 #
-# modified from the scripts found on backtrack-linux.org by killadninja and tedbear
-#
-#[ Requirements ]
-# sslstrip
-# dsniff
-# ettercap
-# iptables
+#[ Requirements
+#|  sslstrip
+#|  dsniff
+#|  ettercap
+#[  iptables
 
 IFACES=$(ifconfig | grep '  $' | cut -d " " -f1)
 
