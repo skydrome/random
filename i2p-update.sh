@@ -19,7 +19,7 @@ KEY="" # Key for signatures using either the key name or the key hash
 # see install_archive()
 I2P_VER="0.9"
 I2P_AURL="http://mirror.i2p2.de"
-SHA256="8a3654a13781a9aacf9db94081e057be73322f88db2931eba4f2cfa467ead429 "
+SHA256="8a3654a13781a9aacf9db94081e057be73322f88db2931eba4f2cfa467ead429"
 
 #[ FUNCTIONS ]#
 usage() {
