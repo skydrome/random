@@ -17,18 +17,19 @@ I2P_URL="mtn.i2p-projekt.de"
 KEY="" # Key for signatures using either the key name or the key hash
 
 # see install_archive()
-I2P_VER="0.8.13"
+I2P_VER="0.9"
 I2P_AURL="http://mirror.i2p2.de"
-SHA256="bdd510cc47b2cd78aa8d994e27694185c1f2deb48b049d61a93a795932ce5712"
+SHA256="8a3654a13781a9aacf9db94081e057be73322f88db2931eba4f2cfa467ead429 "
 
 #[ FUNCTIONS ]#
 usage() {
 cat <<EOF
+
  Usage:
  ./$(basename $0) [options]
 
  options:
- -a, --archive       Download "${I2P_URL}/i2psource_${VER}.tar.bz2"
+ -a, --archive       Download i2psource_${I2P_VER}.tar.bz2
      --archiveupdate   ^ but perform an update
  -d, --no-build      Download source ONLY, dont build
  -f, --force         Force compile even if source hasn't changed
@@ -52,7 +53,8 @@ while [[ $# > 0 ]]; do
         -f|--force) opt_force_compile=1 ;;
         -j|--java-wrapper) opt_compile_wrapper=1 ;;
         -r|--restart) opt_restart=1 ;;
-        *) usage ;;
+        -h|--help) usage ;;
+        *) echo " Unrecognized option"; usage ;;
     esac
     shift
 done
@@ -60,7 +62,7 @@ done
 [[ $(type -P "ant") ]] || { msg "You need apache-ant to compile the I2P sources\n"
                             exit 1; }
 [[ $UID = 0 ]] && ( msg "\e[1;31mYOU ARE RUNNING AS ROOT USER!\e[1;32m You probably dont want to do this!"
-                    msg "Waiting 10 seconds to continue anyways...\n"; sleep 10 )
+                    msg "Waiting 30 seconds and continuing anyways...\n"; sleep 30 )
 
 check_return() {
     if [[ "$_E" != 0 ]]; then
@@ -71,7 +73,6 @@ check_return() {
 restart_router() {
     if [[ $opt_restart ]]; then
         msg "Restarting I2P Router..."
-        sudo chown -R $I2P_USER $I2P_BIN_PATH
         sudo $I2P_BIN_PATH/i2prouter restart
     fi
 }
@@ -99,10 +100,12 @@ install_archive() {
         sudo mv -v i2pupdate.zip $I2P_BIN_PATH
     else
         ant installer-linux
-        sudo mkdir -p $I2P_BIN_PATH ; sudo mv -v i2pinstall.exe $I2P_BIN_PATH ; cd $I2P_BIN_PATH
+        sudo mkdir -p $I2P_BIN_PATH ; sudo mv -v i2pinstall.jar $I2P_BIN_PATH ; cd $I2P_BIN_PATH
         msg "Starting interactive installer..."
         sudo java -jar i2pinstall*.jar -console
     fi
+    sed -i "s:#RUN_AS_USER=:RUN_AS_USER=${I2P_USER}:" $I2P_BIN_PATH/i2prouter
+    sudo chown -R $I2P_USER:$I2P_USER $I2P_BIN_PATH
     [[ $opt_compile_wrapper ]] || restart_router
 }
 install_mtn() {
@@ -134,13 +137,15 @@ install_mtn() {
             ant updater ; _E=$? ; check_return "ant updater"
             sudo mv -v i2pupdate.zip $I2P_BIN_PATH
         fi
+        sed -i "s:#RUN_AS_USER=:RUN_AS_USER=${I2P_USER}:" $I2P_BIN_PATH/i2prouter
+        sudo chown -R $I2P_USER:$I2P_USER $I2P_BIN_PATH
         [[ $opt_compile_wrapper ]] || restart_router
     else msg "I2P already up to date."
     fi
 }
 install_wrapper() {
 _VER="3.5.14"
-[[ $(uname -m) = "64" ]] && _ARCH="64" || _ARCH="32"
+[[ $(uname -m) = "x86_64" ]] && _ARCH="64" || _ARCH="32"
 cd $BASEDIR
     if [[ ! -d "wrapper_${_VER}_src" ]]; then
         msg "Fetching java wrapper v$_VER ..."
@@ -154,6 +159,7 @@ cd $BASEDIR
         sudo install -v -m 644 bin/wrapper $I2P_BIN_PATH/i2psvc
         sudo install -v -m 644 lib/wrapper.jar $I2P_BIN_PATH/lib
         sudo install -v -m 755 lib/libwrapper.so $I2P_BIN_PATH/lib
+    sudo chown -R $I2P_USER:$I2P_USER $I2P_BIN_PATH
     restart_router
 }
 
