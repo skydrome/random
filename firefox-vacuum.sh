@@ -3,10 +3,11 @@
 RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 
 # Check if firefox is running, exit if it is
-if [[ $(ps aux | grep 'firefox' | grep -v 'grep' | grep -v 'vacuum') ]]; then
-    echo -e "${RED} Error: Firefox is still running.${RST}"
-    exit 1
-fi
+[[ $(ps aux | grep 'firefox' | grep -v 'grep' | grep -v 'vacuum') ]] &&
+    echo -n "Waiting for firefox to exit"
+while [[ $(ps aux | grep 'firefox' | grep -v 'grep' | grep -v 'vacuum') ]]; do
+    echo -n "."; sleep 2
+done
 
 # Check for a .mozilla folder in each users home directory
 for dir in $(cat /etc/passwd | grep "home" | cut -d':' -f6); do
@@ -24,7 +25,7 @@ for dir in $(cat /etc/passwd | grep "home" | cut -d':' -f6); do
                     (sqlite3 $db "VACUUM;" && sqlite3 $db "REINDEX;")
                     s_new=$(stat -c%s "$db")
                     diff=$(((s_old - s_new) / 1024))
-                echo -e "$(tput cr)$(tput cuf 36)${GRN}done${RST} [-${YLW}${diff}${RST} KB]"
+                echo -e "$(tput cr)$(tput cuf 36)${GRN}done${RST}  [ -${YLW}${diff}${RST} KB ]"
             done
         done
     else echo -e "[${RED}none${RST}]"
