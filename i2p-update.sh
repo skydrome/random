@@ -156,10 +156,10 @@ cd $BASEDIR
     sudo $I2P_BIN_PATH/i2prouter stop
     ./build${_ARCH}.sh ; _E=$? ; check_return "./build${_ARCH}.sh java wrapper"
     strip --strip-unneeded bin/wrapper lib/libwrapper.so
-        sudo install -v -m 644 bin/wrapper $I2P_BIN_PATH/i2psvc
-        sudo install -v -m 644 lib/wrapper.jar $I2P_BIN_PATH/lib
+        sudo install -v -m 644 bin/wrapper       $I2P_BIN_PATH/i2psvc
+        sudo install -v -m 644 lib/wrapper.jar   $I2P_BIN_PATH/lib
         sudo install -v -m 755 lib/libwrapper.so $I2P_BIN_PATH/lib
-    sudo chown -R $I2P_USER:$I2P_USER $I2P_BIN_PATH
+        sudo chown -R $I2P_USER:$I2P_USER $I2P_BIN_PATH
     restart_router
 }
 
