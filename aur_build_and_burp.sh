@@ -11,8 +11,8 @@ build() {
                 exit
             fi
         echo "done"
-        echo "$pkgname-$pkgver-$pkgrel.src.tar.gz has been successfully uploaded (dry run)"
-        #burp "$pkgname-$pkgver-$pkgrel.src.tar.gz"
+        #echo "$pkgname-$pkgver-$pkgrel.src.tar.gz has been successfully uploaded (dry run)"
+        burp "$pkgname-$pkgver-$pkgrel.src.tar.gz"
     )
 }
 
