@@ -30,9 +30,8 @@ _firefox() {
     for dir in $(cat /etc/passwd | grep "home" | cut -d':' -f6); do
         echo -en "\n${GRN}Scanning for firefox profiles in ${YLW}${dir}${RST}  "
         if [[ -f "$dir/.mozilla/firefox/profiles.ini" ]]; then
-            echo -e "[${GRN}found${RST}]"
+            echo -e " [${GRN}found${RST}]"
             # Figure out the profiles name
-            #for profiledir in $(cat "$dir/.mozilla/firefox/profiles.ini" | grep 'Path=' | sed -e 's/Path=//'); do
             for profiledir in $(grep Path $dir/.mozilla/firefox/profiles.ini | sed 's/Path=//'); do
                 cd $dir/.mozilla/firefox/$profiledir
                 find . -maxdepth 1 -name '*.sqlite' -print0 | xargs -0 -n1 -I{} bash -c "_worker {}"
@@ -50,10 +49,8 @@ _chromium() {
         echo -en "\n${GRN}Scanning for chromium profiles in ${YLW}${dir}${RST}  "
         if [[ -d "$dir/.config/chromium/Default" ]]; then
             echo -e "[${GRN}found${RST}]"
-            for _dir in Default Default/*Storage; do
-                cd $dir/.config/chromium/$_dir
-                find . -maxdepth 1 -type f -print0 | xargs -0 -n1 -I{} bash -c "_worker {}"
-            done
+            cd $dir/.config/chromium/Default
+            find . -maxdepth 1 -type f -print0 | xargs -0 -n1 -I{} bash -c "_worker {}"
         else
             echo -e "[${RED}none${RST}]"
         fi
