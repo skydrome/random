@@ -3,9 +3,8 @@
 RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 
 _worker() {
+RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 if [[ $(file $1 | grep SQL | cut -f1 -d:) ]]; then
-echo $1
-exit
     echo -en "${GRN} Cleaning${RST} $1"
     # Record size of each db before and after vacuuming
     s_old=$(stat -c%s "$1")
