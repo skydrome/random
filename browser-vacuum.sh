@@ -11,7 +11,7 @@ run_cleaner() {
         sqlite3 "$1" "VACUUM;" && sqlite3 "$db" "REINDEX;"
         s_new=$(stat -c%s "$db")
         diff=$(((s_old - s_new) / 1024))
-        echo -e "$(tput cr)$(tput cuf 38)${GRN}done${RST}  [ -${YLW}${diff}${RST} KB ]"
+        echo -e "$(tput cr)$(tput cuf 40)${GRN}done${RST} [ -${YLW}${diff}${RST} KB ]"
     fi
     done < <(find . -maxdepth 1 -type f -print0)
 }
