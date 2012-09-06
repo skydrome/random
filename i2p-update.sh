@@ -24,10 +24,10 @@ cat <<EOF
  ./$(basename $0) [options]
 
  options:
- -d, --no-build      Download source ONLY, dont build
+ -d, --dont-build    Download source ONLY, dont build
  -f, --force         Force compile even if source hasn't changed
  -j, --java-wrapper  Compile the java wrapper from source
- -r, --restart       Restart I2P after updating
+ -r, --restart       Restart I2P after updating or installing wrapper
 
 EOF
 exit 1
@@ -40,7 +40,7 @@ msg() {
 BASEDIR=$(pwd)
 while [[ $# > 0 ]]; do
     case "$1" in
-        -d|--no-build) opt_no_build=1 ;;
+        -d|--dont-build) opt_no_build=1 ;;
         -f|--force) opt_force_compile=1 ;;
         -j|--java-wrapper) opt_compile_wrapper=1 ;;
         -r|--restart) opt_restart=1 ;;
@@ -54,7 +54,7 @@ done
     msg "You need apache-ant to compile the I2P sources\n"
     exit 1
 }
-[[ ! $(type -P "mtn") ]] && {
+[[ $opt_compile_wrapper = 0 && ! $(type -P "mtn") ]] && {
     msg "You need monotone to download the I2P sources\n"
     exit 1
 }
@@ -78,7 +78,7 @@ restart_router() {
     fi
 }
 
-install_mtn() {
+build_i2p() {
     if [[ ! -f i2p.mtn ]]; then
         _new_install=true
         msg "No db found, initializing db i2p.mtn now..."
@@ -113,8 +113,9 @@ install_mtn() {
     fi
 }
 
-install_wrapper() {
+build_wrapper() {
 _VER="3.5.15"
+_CFLAGS="-march=native"
 [[ $(uname -m) = "x86_64" ]] && _ARCH="64" || _ARCH="32"
 cd $BASEDIR
     if [[ ! -d "wrapper_${_VER}_src" ]]; then
@@ -124,6 +125,7 @@ cd $BASEDIR
     cd wrapper_${_VER}_src
     msg "Starting compile..."
     sudo $I2P_PATH/i2prouter stop
+    sed -i "s|gcc |gcc $_CFLAGS |" src/c/Makefile-linux-x86-${_ARCH}.make
     ./build${_ARCH}.sh ; _E=$? ; check_return "./build${_ARCH}.sh java wrapper"
     strip --strip-unneeded bin/wrapper lib/libwrapper.so
         sudo install -v -m 644 bin/wrapper       $I2P_PATH/i2psvc
@@ -134,6 +136,7 @@ cd $BASEDIR
 }
 
 #[ MAIN ]#
-install_mtn
-[[ $opt_compile_wrapper ]] && install_wrapper
+[[ $opt_compile_wrapper ]] &&
+    build_wrapper ||
+    build_i2p
 msg "Done!"
