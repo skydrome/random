@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-I2P_PATH=/opt/i2p
+I2P=/opt/i2p
 DEST="$1"
 
 pinger() {
-    exec java -cp ${I2P_PATH}/lib/i2ptunnel.jar:${I2P_PATH}/lib/mstreaming.jar:${I2P_PATH}/lib/streaming.jar:${I2P_PATH}/lib/i2p.jar net.i2p.i2ptunnel.I2PTunnel -cli "$@"
+    java -cp $I2P/lib/i2ptunnel.jar:$I2P/lib/mstreaming.jar:$I2P/lib/streaming.jar:$I2P/lib/i2p.jar net.i2p.i2ptunnel.I2PTunnel -cli "$@"
 }
 
 if [[ "$DEST" ]]; then
@@ -16,7 +16,6 @@ if [[ "$DEST" ]]; then
     in=${PING[1]}
 
     echo "ping -n 10 -t 50000 $DEST" >&$in
-
     while read -rt60 line <&$out
     do
         echo "[$(date -u +%H:%M:%S)]  $line"
@@ -29,5 +28,6 @@ if [[ "$DEST" ]]; then
 
     echo "[TIMEOUT]"
     exit 2
-else pinger
+else
+    pinger
 fi
