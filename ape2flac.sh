@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+get_tag() {
+    tag=$1
+    file=$2
+    mediainfo "--Inform=General;%${tag}%" "$file"
+}
+
+set_tag() {
+    key=$1
+    value=$2
+    file=$3
+    [[ -n "$value" ]] && metaflac --set-tag=${key}=${value} "$file"
+}
+
+convert_tags() {
+    apefile=$1
+    flacfile=$2
+    artist=$(get_tag "Artist" "$apefile")
+    albper=$(get_tag "Album/Performer" "$apefile")
+    performer=$(get_tag "Performer" "$apefile")
+    composer=$(get_tag "Composer" "$apefile")
+    album=$(get_tag "Album" "$apefile")
+    title=$(get_tag "Title" "$apefile")
+    year=$(get_tag "Recorded_Date" "$apefile")
+    genre=$(get_tag "Genre" "$apefile")
+    tracknum=$(get_tag "Track/Position" "$apefile")
+    discnum=$(get_tag "Part" "$apefile")
+    comment=$(get_tag "Comment" "$apefile")
+    set_tag ARTIST "$artist" "$flacfile"
+    set_tag ALBUMARTIST "$albper" "$flacfile"
+    set_tag PERFORMER "$performer" "$flacfile"
+    set_tag COMPOSER "$composer" "$flacfile"
+    set_tag ALBUM "$album" "$flacfile"
+    set_tag TITLE "$title" "$flacfile"
+    set_tag DATE "$year" "$flacfile"
+    set_tag GENRE "$genre" "$flacfile"
+    set_tag TRACKNUMBER "$tracknum" "$flacfile"
+    set_tag DISCNUMBER "$discnum" "$flacfile"
+    set_tag COMMENT "$comment" "$flacfile"
+}
+
+while [[ $# -gt 0 ]]; do
+    apefile=$1
+    flacfile="${apefile%.*}.flac"
+    wavfile="${apefile%.*}.wav"
+    echo -e "\e[1;31m--->\e[1;32m $apefile \e[0m"
+    echo "APE --> WAV"
+    mac "$apefile" "$wavfile" -d
+    echo "WAV --> FLAC"
+    flac --best -f -o "$flacfile" "$wavfile"
+    convert_tags "$apefile" "$flacfile"
+    shift
+done
