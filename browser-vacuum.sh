@@ -18,7 +18,7 @@ run_cleaner() {
 }
 
 if_running() {
-    i=1 # after this timeout, we give up waiting (60*2 seconds)
+    i=10 # after this timeout, we give up waiting (i*2 seconds)
     [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
         echo -n "Waiting for "$1" to exit"
     # Wait for <user's> <browser> to die
