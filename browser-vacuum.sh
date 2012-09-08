@@ -18,7 +18,7 @@ run_cleaner() {
 }
 
 if_running() {
-    i=10 # after this timeout, we give up waiting (i*2 seconds)
+    i=5 # after this timeout, we give up waiting (i*2 seconds)
     [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
         echo -n "Waiting for "$1" to exit"
     # Wait for <user's> <browser> to die
@@ -80,7 +80,10 @@ RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 
 # If we have sudo privs then run for all users on system, else just run on self
 [[ "$EUID" = 0 ]] &&
-    priv=$(cat /etc/passwd | grep 'home' | cut -d':' -f6 | cut -c7-) ||
+    # This is slow but sometimes more accurate depending on distro
+    #priv=$(grep 'home' /etc/passwd | cut -d':' -f6 | cut -c7-) ||
+    # This is 2x faster but assumes user names are same as the user's home directory
+    priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -d':' -f6 | cut -c7-) ||
     priv="$USER"
 
 for user in $priv; do
