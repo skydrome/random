@@ -7,7 +7,7 @@ run_cleaner() {
             echo -en "${GRN} Cleaning${RST} $db"
             # Record size of each db before and after vacuuming
             s_old=$(stat -c%s "$db")
-            sqlite3 "$1" "VACUUM;"
+            sqlite3 "$db" "VACUUM;"
             sqlite3 "$db" "REINDEX;"
             s_new=$(stat -c%s "$db")
             # convert to kilobytes
@@ -38,7 +38,7 @@ _firefox() {
     echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for firefox profiles${RST}"
     if [[ -f "/home/$user/.mozilla/firefox/profiles.ini" ]]; then
         echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-        # We found one, now figure run cleaner for each <browser profile>
+        # We found one, now run the cleaner for each <browser profile>
         for profiledir in $(grep Path /home/$user/.mozilla/firefox/profiles.ini | sed 's/Path=//'); do
             cd /home/$user/.mozilla/firefox/$profiledir
             # Check if <browser> is *not* running before cleaning
@@ -84,7 +84,7 @@ priv="$USER"
     # This is slow but sometimes more accurate depending on distro
     #priv=$(grep 'home' /etc/passwd | cut -d':' -f6 | cut -c7-)
 
-    # This is 2x faster but assumes user names are same as the user's home directory
+    # This is a couple milliseconds faster but assumes user names are same as the user's home directory
     priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -d':' -f6 | cut -c7-)
 
 for user in "$priv"; do
