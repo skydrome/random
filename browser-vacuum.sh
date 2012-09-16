@@ -64,14 +64,16 @@ _thunderbird() {
 }
 
 _chromium() {
-    echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for chromium profiles${RST}"
-    if [[ -d "/home/$user/.config/chromium/Default" ]]; then
-        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-        cd /home/$user/.config/chromium/Default
-        if_running 'chromium' && run_cleaner
-    else
-        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
-    fi
+    for b in {chromium,google-chrome}; do
+        echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        if [[ -d "/home/$user/.config/$b/Default" ]]; then
+            echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            cd /home/$user/.config/$b/Default
+            if_running "$b" && run_cleaner
+        else
+            echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+        fi
+    done
 }
 
 
