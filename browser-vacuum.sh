@@ -18,7 +18,7 @@ run_cleaner() {
 }
 
 if_running() {
-    i=5 # after this timeout, we give up waiting (i*2 seconds)
+    i=10 # after this timeout, we give up waiting (i*2 seconds)
     [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
         echo -n "Waiting for "$1" to exit"
     # Wait for <user's> <browser> to die
@@ -35,19 +35,21 @@ if_running() {
 
 _firefox() {
     # Check for a <browser config> folder in each users home directory
-    echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for firefox profiles${RST}"
-    if [[ -f "/home/$user/.mozilla/firefox/profiles.ini" ]]; then
-        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-        # We found one, now run the cleaner for each <browser profile>
-        for profiledir in $(grep Path /home/$user/.mozilla/firefox/profiles.ini | sed 's/Path=//'); do
-            cd /home/$user/.mozilla/firefox/$profiledir
-            # Check if <browser> is *not* running before cleaning
-            if_running 'firefox' && run_cleaner
-        done
-    else
-        # This user has no <browser config>
-        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
-    fi
+    for b in {firefox,icecat,seamonkey}; do
+        echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
+            echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            # We found one, now run the cleaner for each <browser profile>
+            for profiledir in $(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//'); do
+                cd /home/$user/.mozilla/$b/$profiledir
+                # Check if <browser> is *not* running before cleaning
+                if_running "$b" && run_cleaner
+            done
+        else
+            # This user has no <browser config>
+            echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+        fi
+    done
 }
 
 _thunderbird() {
@@ -89,7 +91,7 @@ priv="$USER"
     # This is a couple milliseconds faster but assumes user names are same as the user's home directory
     priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -d':' -f6 | cut -c7-)
 
-for user in "$priv"; do
+for user in $priv; do
     _firefox
     _thunderbird
     _chromium
