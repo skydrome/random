@@ -2,28 +2,37 @@
 
 build() {
     [[ -r "$1/PKGBUILD" ]] && (
-        cd $1
+        cd "$1"
+        if [[ -f *.src.tar.gz ]]; then
+            echo "Another source package exists..."
+            exit
+        fi
         echo -en "\nBuilding source $1 ... "
-            namcap PKGBUILD && source PKGBUILD || exit
+        namcap -i PKGBUILD
+        if [[ ! "$_check" ]]; then
+            source PKGBUILD
             makepkg -Sf &>/dev/null
             if (( $? != 0 )); then
                 echo "FAIL | $pkgname-$pkgver-$pkgrel"
                 exit
             fi
-        echo "done"
-        #echo "$pkgname-$pkgver-$pkgrel.src.tar.gz has been successfully uploaded (dry run)"
-        burp "$pkgname-$pkgver-$pkgrel.src.tar.gz"
+            echo "done"
+            #echo "$pkgname-$pkgver-$pkgrel.src.tar.gz has been successfully uploaded (dry run)"
+            burp "$pkgname-$pkgver-$pkgrel.src.tar.gz" &&
+                rm "$pkgname-$pkgver-$pkgrel.src.tar.gz"
+        fi
     )
 }
 
+[[ "$1" = 'check' ]] && { _check=1; shift; }
+
 if [[ "$1" = 'all' ]]; then
-    echo "--==--[ Building entire tree ]--==--"
-    for d in $(find . -maxdepth 1 -type d)
-        do build "$(basename $d)"
+    for dir in $(find . -maxdepth 1 -type d); do
+        build "$(basename $dir)"
     done
 else
-    for d in $*
-        do build "$d"
+    for dir in $*; do
+        build "$dir"
     done
 fi
 

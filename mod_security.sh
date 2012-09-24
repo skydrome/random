@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ $# = 0 ]]; then
+if (( $# == 0 )); then
     echo "Please supply an apache error log file as an argument."
 else
 

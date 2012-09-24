@@ -1,8 +1,6 @@
 #!/bin/bash
 # wrapper for managing systemd services
 
-arg1=$1
-
 usage () {
 cat <<EOF
 
@@ -26,17 +24,10 @@ EOF
 
 actions=("start" "restart" "stop" "enable" "disable")
 
-for i in "${actions[@]}"; do
-    [[ "$i" = "$arg1" ]] && super="yes"
-done
+(( $# == 2 )) &&
+  systemctl "$1" "${2}.service"
 
-if [[ $# == 2 && "$super" == "yes" ]]; then
-    sudo systemctl "$1" "$2".service
-elif (( $# == 2 )); then
-    systemctl "$1" "$2".service
-fi
-
-if (( $# <= 1 )); then
+(( $# <= 1 )) && {
     case "$1" in
         list) systemctl list-units ;;
        fail*) systemctl --failed   ;;
@@ -44,4 +35,4 @@ if (( $# <= 1 )); then
        shut*) systemctl poweroff   ;;
            *) usage && exit        ;;
    esac
-fi
+}
