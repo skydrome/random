@@ -14,7 +14,8 @@ I2P_URL="mtn.i2p-projekt.de"
 #I2P_URL="mtn.i2pproject.net"
 #I2P_URL="127.0.0.1:8998"
 
-KEY="" # Key for signatures using either the key name or the key hash
+# Key for signatures using either the key name or the key hash
+KEY=""
 
 #[ FUNCTIONS ]#
 usage() {
@@ -33,9 +34,7 @@ EOF
 exit 1
 }
 
-msg() {
-    echo -e "\e[1;31m--->\e[1;32m $1 \e[0m"
-}
+msg() { echo -e "\e[1;31m--->\e[1;32m $1 \e[0m"; }
 
 BASEDIR=$(pwd)
 while [[ $# > 0 ]]; do
@@ -45,16 +44,16 @@ while [[ $# > 0 ]]; do
         -j|--java-wrapper) opt_compile_wrapper=1 ;;
         -r|--restart) opt_restart=1 ;;
         -h|--help) usage ;;
-        *) echo " Unrecognized option"; usage ;;
+        *) echo " Unrecognized option: $1"; usage ;;
     esac
     shift
 done
 
-[[ ! $(type -P "ant") ]] && {
+[[ ! $(type -P ant) ]] && {
     msg "You need apache-ant to compile the I2P sources\n"
     exit 1
 }
-[[ $opt_compile_wrapper = 0 && ! $(type -P "mtn") ]] && {
+[[ ! $opt_compile_wrapper && ! $(type -P mtn) ]] && {
     msg "You need monotone to download the I2P sources\n"
     exit 1
 }
@@ -90,13 +89,14 @@ build_i2p() {
         md5sum i2p.mtn > MD5SUM
     fi
 
-    cd i2p.i2p && mtn -k "$KEY" pull && mtn up
+    ( cd i2p.i2p && mtn -k "$KEY" pull && mtn up )
     md5sum --check --status MD5SUM || hash_fail=1
 
     if [[ $hash_fail || $opt_force_compile ]]; then
         [[ $opt_no_build ]] && exit 0
         msg "Starting compile..."
         cd i2p.i2p
+        sed 's:require.gettext=true:require.gettext=false:' -i build.properties
         if [[ $_new_install ]]; then
             ant installer-linux
             sudo mkdir -p $I2P_PATH ; sudo mv -v i2pinstall*.jar $I2P_PATH ; cd $I2P_PATH
@@ -109,7 +109,8 @@ build_i2p() {
         sed -i "s:#RUN_AS_USER=:RUN_AS_USER=${I2P_USER}:" $I2P_PATH/i2prouter
         sudo chown -R $I2P_USER:$I2P_USER $I2P_PATH
         [[ $opt_compile_wrapper ]] || restart_router
-    else msg "I2P already up to date."
+    else
+        msg "I2P already up to date."
     fi
 }
 
