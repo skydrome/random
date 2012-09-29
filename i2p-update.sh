@@ -106,7 +106,7 @@ build_i2p() {
             ant updater ; _E=$? ; check_return "ant updater"
             sudo mv -v i2pupdate.zip $I2P_PATH
         fi
-        sed -i "s:#RUN_AS_USER=:RUN_AS_USER=${I2P_USER}:" $I2P_PATH/i2prouter
+        sudo sed -i "s:#RUN_AS_USER=:RUN_AS_USER=${I2P_USER}:" $I2P_PATH/i2prouter
         sudo chown -R $I2P_USER:$I2P_USER $I2P_PATH
         [[ $opt_compile_wrapper ]] || restart_router
     else
