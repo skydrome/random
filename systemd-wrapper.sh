@@ -20,12 +20,19 @@ cat <<EOF
     shut       |  poweroff
 
 EOF
+exit
 }
 
-actions=("start" "restart" "stop" "enable" "disable")
-
-(( $# == 2 )) &&
-  systemctl "$1" "${2}.service"
+(( $# >= 2 )) && {
+    [[ "$1" = @(*start|stop|*able) ]] &&
+        action="$1" || usage
+    shift
+    for arg in $* ;do
+        sudo systemctl $action ${arg}.service
+        sleep 2
+    done
+    exit
+}
 
 (( $# <= 1 )) && {
     case "$1" in
@@ -33,6 +40,6 @@ actions=("start" "restart" "stop" "enable" "disable")
        fail*) systemctl --failed   ;;
       reboot) systemctl reboot     ;;
        shut*) systemctl poweroff   ;;
-           *) usage && exit        ;;
-   esac
+           *) usage
+    esac
 }
