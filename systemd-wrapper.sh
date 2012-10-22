@@ -1,7 +1,7 @@
 #!/bin/bash
 # wrapper for managing systemd services
 
-usage () {
+usage() {
 cat <<EOF
 
     start      |  start a service
@@ -28,7 +28,7 @@ exit
         action="$1" || usage
     shift
     for arg in $* ;do
-        sudo systemctl $action ${arg}.service
+        sudo systemctl $action $arg
         sleep 2
     done
     exit

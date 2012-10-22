@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-
+total=0
 run_cleaner() {
     while read -rd '' db; do
         # for each file that is an sqlite database vacuum and reindex
         if [[ $(file "$db" | grep SQLite | cut -f1 -d:) ]]; then
-        (
-            trap '' INT TERM
             echo -en "${GRN} Cleaning${RST} $db"
             # Record size of each db before and after vacuuming
             s_old=$(stat -c%s "$db")
-            sqlite3 "$db" "VACUUM;"
-            sqlite3 "$db" "REINDEX;"
+            (
+                trap '' INT TERM
+                sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
+            )
             s_new=$(stat -c%s "$db")
             # convert to kilobytes
             diff=$(((s_old - s_new) / 1024))
-            echo -e "$(tput cr)$(tput cuf 40)${GRN}done${RST} [ -${YLW}${diff}${RST} KB ]"
-        )
+            total=$((diff + total))
+            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} [ -${YLW}${diff}${RST} KB ]"
     fi
     done < <(find . -maxdepth 1 -type f -print0)
 }
@@ -100,3 +100,5 @@ for user in $priv; do
         fi
     done
 done
+
+echo "Total Space Cleaned: ${YLW}${total}${RST} KB"
