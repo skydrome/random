@@ -101,4 +101,4 @@ for user in $priv; do
     done
 done
 
-echo "Total Space Cleaned: ${YLW}${total}${RST} KB"
+echo -e "Total Space Cleaned: ${YLW}${total}${RST} KB"
