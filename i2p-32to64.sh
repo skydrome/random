@@ -4,7 +4,7 @@ I2P=/opt/i2p
 
 if (( "$#" < 1 )); then
     echo "This script looks up an I2P destination by b32 address"
-    echo "If the destination is not found, "null" is printed"
+    echo "If the destination is not found, \"null\" is printed"
     echo
     echo "Usage: $0 <b32>"
     echo
