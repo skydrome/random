@@ -28,8 +28,10 @@ exit
         action="$1" || usage
     shift
     for arg in $* ;do
+        echo -n "${action}ing $arg ... "
         sudo systemctl $action $arg
-        sleep 2
+        [[ $? = 0 ]] && echo 'done' || echo 'fail'
+        #sleep 2
     done
     exit
 }
