@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 total=0
 run_cleaner() {
     while read -rd '' db; do
@@ -15,7 +16,7 @@ run_cleaner() {
             # convert to kilobytes
             diff=$(((s_old - s_new) / 1024))
             total=$((diff + total))
-            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} [ -${YLW}${diff}${RST} KB ]"
+            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST}  -${YLW}${diff}${RST} KB"
     fi
     done < <(find . -maxdepth 1 -type f -print0)
 }
@@ -76,17 +77,17 @@ for user in $priv; do
         fi
     done
 
-#[ THUNDERBIRD ]#
-    echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for thunderbird profiles${RST}"
-    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
-        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-        for profiledir in $(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//'); do
-            cd /home/$user/.thunderbird/$profiledir
-            if_running 'thunderbird' && run_cleaner
-        done
-    else
-        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
-    fi
+#[ THUNDERBIRD ]#  Useless
+#    echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for thunderbird profiles${RST}"
+#    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
+#        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+#        for profiledir in $(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//'); do
+#            cd /home/$user/.thunderbird/$profiledir
+#            if_running 'thunderbird' && run_cleaner
+#        done
+#    else
+#        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+#    fi
 
 #[ CHROMIUM GOOGLE-CHROME ]#
     for b in {chromium,google-chrome}; do
