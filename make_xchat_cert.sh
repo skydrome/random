@@ -6,11 +6,11 @@ XCHAT_DIR=("$2"
            "~/.xchat"
            "~/.xchat2"
            "~/.config/hexchat/certs")
+
 SUBJECT="/C=AN/ST=ON/L=YM/O=OUS/CN=$HOSTNAME/emailAddress=anon@mous"
 
 if [[ ! $1 ]]; then
-    echo -e "\n Usage:"
-    echo -e " ./$(basename $0) [Network Name]\n"
+    echo -e "\n Usage:\n ./$(basename $0) [Network Name]\n"
     exit 1
 fi
 
@@ -37,4 +37,3 @@ cd "$configdir"
 
 echo -e "\n----- NICKSERV FINGERPRINT -----"
 echo -e "$(openssl x509 -sha1 -noout -fingerprint -in "$CERT_NAME.pem" | sed -e 's/^.*=//;s/://g;y/ABCDEF/abcdef/')\n"
-
