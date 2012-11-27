@@ -5,7 +5,7 @@ CERT_NAME="$1"
 XCHAT_DIR=("$2"
            "~/.xchat"
            "~/.xchat2"
-           "~/.config/hexchat")
+           "~/.config/hexchat/certs")
 SUBJECT="/C=AN/ST=ON/L=YM/O=OUS/CN=$HOSTNAME/emailAddress=anon@mous"
 
 if [[ ! $1 ]]; then
