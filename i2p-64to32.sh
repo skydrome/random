@@ -22,5 +22,5 @@ echo -n "$1" \
 
 java -cp $I2P/lib/i2p.jar net.i2p.data.Base32 encode ${TEMP_FILE_BIN} ${TEMP_FILE_B32}
 
-echo "$(cat $TEMP_FILE_B32).b32.i2p"
+echo "http://$(cat $TEMP_FILE_B32).b32.i2p/"
 rm $TEMP_FILE_BIN $TEMP_FILE_B32
