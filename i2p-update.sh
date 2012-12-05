@@ -82,7 +82,7 @@ build_i2p() {
         _new_install=true
         msg "No db found, initializing db i2p.mtn now..."
         mtn db init --db=i2p.mtn && md5sum i2p.mtn > MD5SUM
-        mtn --db=i2p.mtn -k "$KEY" pull "$I2P_URL" i2p.i2p
+        mtn --db=i2p.mtn -k "$KEY" pull "${I2P_URL}?i2p.i2p"
         mtn --db=i2p.mtn checkout --branch=i2p.i2p
     else
         msg "Checking for updates..."
