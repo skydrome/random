@@ -36,4 +36,4 @@ cd "$configdir"
     fi
 
 echo -e "\n----- NICKSERV FINGERPRINT -----"
-echo -e "$(openssl x509 -sha1 -noout -fingerprint -in "$CERT_NAME.pem" | sed -e 's/^.*=//;s/://g;y/ABCDEF/abcdef/')\n"
+echo -e "$(openssl x509 -sha1 -noout -fingerprint -in "${CERT_NAME}.pem" | sed -e 's/^.*=//;s/://g;y/ABCDEF/abcdef/')\n"
