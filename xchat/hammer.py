@@ -2,7 +2,7 @@ import xchat
 
 __module_name__ = "Freenode Hammer"
 __module_version__ = "1.1"
-__module_description__ = "Provides the /silence /o and /hammer commands for use in FreeNode" 
+__module_description__ = "Provides the /silence and /hammer commands for use in FreeNode" 
 
 def isop():
 	_isop = False

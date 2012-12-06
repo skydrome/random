@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 import xchat
 
@@ -24,4 +24,4 @@ def devoice(word, word_eol, userdata):
 xchat.hook_command("mvoice", voice, help="Mass voice all users")
 xchat.hook_command("mdevoice", devoice, help="Mass devoice all users")
 print("Loaded {0}, version {1}".format(__module_name__, __module_version__))
-	
+
