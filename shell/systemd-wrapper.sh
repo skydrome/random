@@ -27,6 +27,7 @@ exit
     [[ "$1" = @(*start|stop|*able) ]] &&
         action="$1" || usage
     shift
+    sudo systemctl --system daemon-reload
     for arg in $* ;do
         echo -n "${action}ing $arg ... "
         sudo systemctl $action $arg

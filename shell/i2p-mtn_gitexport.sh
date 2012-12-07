@@ -4,6 +4,7 @@
 MTN_SRC="/usr/src/i2p"
 GIT_SRC="$HOME/github/i2p.i2p"
 MTN_KEY=""
+OPTIONS="--refs=revs --log-revids --log-certs"
 
 cd "$MTN_SRC"
 md5sum i2p.mtn > MD5SUM
@@ -13,9 +14,9 @@ md5sum i2p.mtn > MD5SUM
         { echo "non zero exit status from mtn pull"; exit 1; }
     cd ..
 
-md5sum --check --status MD5SUM || {
-
+md5sum --check --status MD5SUM ||
+{
     cd "$GIT_SRC"
-    mtn --db "${MTN_SRC}/i2p.mtn" git_export | git fast-import && git push ||
-        { echo "non zero exit status from git-import/push"; exit 1; }
+    mtn --db "${MTN_SRC}/i2p.mtn" git_export "$OPTIONS" | git fast-import && git push ||
+            { echo "non zero exit status from git-import/push"; exit 1; }
 }

@@ -7,6 +7,8 @@ pinger() {
     java -cp $I2P/lib/i2ptunnel.jar:$I2P/lib/mstreaming.jar:$I2P/lib/streaming.jar:$I2P/lib/i2p.jar net.i2p.i2ptunnel.I2PTunnel -cli "$@"
 }
 
+cd $I2P/.i2p
+
 if [[ "$DEST" ]]; then
     coproc PING { pinger; }
     KILLPID=$!
@@ -15,7 +17,7 @@ if [[ "$DEST" ]]; then
     out=${PING[0]}
     in=${PING[1]}
 
-    echo "ping -n 10 -t 50000 $DEST" >&$in
+    echo "ping -n 10 -t 20000 $DEST" >&$in
     while read -rt60 line <&$out
     do
         echo "[$(date -u +%H:%M:%S)]  $line"
