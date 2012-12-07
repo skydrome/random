@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+#
+# COPYRIGHT: You're free to use, modify, redistribute.
+#   ONLY IF: What you do with it improves upon the original.
+#
+# In other words, you cannot use anything from this to write something
+# that is inferior to what you took it from.
+#
+
 total=0
 run_cleaner() {
     while read -rd '' db; do
@@ -16,7 +24,8 @@ run_cleaner() {
             # convert to kilobytes
             diff=$(((s_old - s_new) / 1024))
             total=$((diff + total))
-            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST}  -${YLW}${diff}${RST} KB"
+            (( $diff == 0 )) && diff="∘" || diff="- ${diff}${RST} KB"
+            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}"
     fi
     done < <(find . -maxdepth 1 -type f -print0)
 }
@@ -40,9 +49,9 @@ if_running() {
             fi
         fi
         echo -n "."; sleep 2
-        # tick tock
         ((i--))
     done
+    echo ""
 }
 
 
@@ -58,11 +67,12 @@ priv="$USER"
     # This is a couple milliseconds faster but assumes user names are same as the user's home directory
     priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -d':' -f6 | cut -c7-)
 
+
 for user in $priv; do
 #[ FIREFOX ICECAT SEAMONKEY ]#
     # Check for a <browser config> folder in each users home directory
     for b in {firefox,icecat,seamonkey}; do
-        echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
             # We found one, now run the cleaner for each <browser profile>
@@ -74,11 +84,12 @@ for user in $priv; do
         else
             # This user has no <browser config>
             echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+            sleep 0.1; tput cuu 1; tput el
         fi
     done
 
 #[ THUNDERBIRD ]#  Useless
-#    echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for thunderbird profiles${RST}"
+#    echo -en "[${YLW}$user${RST}] ${GRN}Scanning for thunderbird profiles${RST}"
 #    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
 #        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
 #        for profiledir in $(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//'); do
@@ -91,15 +102,16 @@ for user in $priv; do
 
 #[ CHROMIUM GOOGLE-CHROME ]#
     for b in {chromium,google-chrome}; do
-        echo -en "\n[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
             cd /home/$user/.config/$b/Default
             if_running "$b" && run_cleaner
         else
             echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+            sleep 0.1; tput cuu 1; tput el
         fi
     done
 done
 
-echo -e "Total Space Cleaned: ${YLW}${total}${RST} KB"
+echo -e "\nTotal Space Cleaned: ${YLW}${total}${RST} KB"
