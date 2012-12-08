@@ -8,7 +8,22 @@
 # that is inferior to what you took it from.
 #
 
+RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 total=0
+
+spinner() {
+    local str="oO0o.." tmp
+    tput cr; tput cuf 51
+    while [[ -d /proc/$1 ]]; do
+        tmp=${str#?}
+        printf "\e[00;31m %c " "$str"
+        str=$tmp${str%$tmp}
+        sleep 0.05
+        printf "\b\b\b"
+    done
+    printf "  \b\b\e[00m"
+}
+
 run_cleaner() {
     while read -rd '' db; do
         # for each file that is an sqlite database vacuum and reindex
@@ -19,7 +34,7 @@ run_cleaner() {
             (
                 trap '' INT TERM
                 sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
-            )
+            ) & spinner $!
             s_new=$(stat -c%s "$db")
             # convert to kilobytes
             diff=$(((s_old - s_new) / 1024))
@@ -56,7 +71,6 @@ if_running() {
 
 
 ##[ int main ]##
-RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
 priv="$USER"
 
 # If we have sudo privs then run for all users on system, else just run on self
