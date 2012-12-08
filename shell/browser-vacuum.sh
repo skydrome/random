@@ -28,7 +28,7 @@ run_cleaner() {
     while read -rd '' db; do
         # for each file that is an sqlite database vacuum and reindex
         if [[ $(file "$db" | grep SQLite | cut -f1 -d:) ]]; then
-            echo -en "${GRN} Cleaning${RST} $db"
+            echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
             # Record size of each db before and after vacuuming
             s_old=$(stat -c%s "$db")
             (
