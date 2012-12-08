@@ -72,7 +72,7 @@ for user in $priv; do
 #[ FIREFOX ICECAT SEAMONKEY ]#
     # Check for a <browser config> folder in each users home directory
     for b in {firefox,icecat,seamonkey}; do
-        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
             # We found one, now run the cleaner for each <browser profile>
@@ -89,7 +89,7 @@ for user in $priv; do
     done
 
 #[ THUNDERBIRD ]#  Useless
-#    echo -en "[${YLW}$user${RST}] ${GRN}Scanning for thunderbird profiles${RST}"
+#    echo -en "[${YLW}$user${RST}] ${GRN}Scanning for thunderbird${RST}"
 #    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
 #        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
 #        for profiledir in $(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//'); do
@@ -102,7 +102,7 @@ for user in $priv; do
 
 #[ CHROMIUM GOOGLE-CHROME ]#
     for b in {chromium,google-chrome}; do
-        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b profiles${RST}"
+        echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
             cd /home/$user/.config/$b/Default
@@ -114,4 +114,6 @@ for user in $priv; do
     done
 done
 
-echo -e "\nTotal Space Cleaned: ${YLW}${total}${RST} KB"
+(( $total > 0 )) &&
+    echo -e "\nTotal Space Cleaned: ${YLW}${total}${RST} KB" ||
+    echo -e "Nothing done."
