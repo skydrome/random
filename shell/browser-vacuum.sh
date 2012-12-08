@@ -27,7 +27,7 @@ spinner() {
 run_cleaner() {
     while read -rd '' db; do
         # for each file that is an sqlite database vacuum and reindex
-        if [[ $(file "$db" | grep SQLite | cut -f1 -d:) ]]; then
+        if [[ $(file "$db" | grep SQLite) ]]; then
             echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
             # Record size of each db before and after vacuuming
             s_old=$(stat -c%s "$db")
@@ -39,7 +39,12 @@ run_cleaner() {
             # convert to kilobytes
             diff=$(((s_old - s_new) / 1024))
             total=$((diff + total))
-            (( $diff == 0 )) && diff="∘" || diff="- ${diff}${RST} KB"
+            if (( $diff > 0 ))
+                then diff="- ${diff}${RST} KB"
+            elif (( $diff < 0 ))
+                then diff="+ $((diff * -1))${RST} KB"
+                else diff="∘"
+            fi
             echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}"
     fi
     done < <(find . -maxdepth 1 -type f -print0)
