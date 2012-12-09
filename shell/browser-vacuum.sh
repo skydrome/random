@@ -48,6 +48,7 @@ run_cleaner() {
             echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}${RST}"
     fi
     done < <(find . -maxdepth 1 -type f)
+    echo
 }
 
 if_running() {
@@ -70,7 +71,7 @@ if_running() {
         fi
         echo -n "."; sleep 2
         ((i--))
-    done; echo
+    done
 }
 
 
@@ -93,12 +94,14 @@ for user in $priv; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            # Check if <browser> is *not* running before cleaning
+            if_running "$b"
             # We found one, now run the cleaner for each <browser profile>
-            for profiledir in $(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//'); do
-                cd /home/$user/.mozilla/$b/$profiledir
-                # Check if <browser> is *not* running before cleaning
-                if_running "$b" && run_cleaner
-            done; echo
+            while read -r profiledir; do
+                echo -e "[${YLW}$(echo $profiledir | cut -d'.' -f2)${RST}]"
+                cd "/home/$user/.mozilla/$b/$profiledir"
+                run_cleaner
+            done < <(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//')
         else
             # This user has no <browser config>
             echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
@@ -110,10 +113,12 @@ for user in $priv; do
 #    echo -en "[${YLW}$user${RST}] ${GRN}Scanning for thunderbird${RST}"
 #    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
 #        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-#        for profiledir in $(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//'); do
-#            cd /home/$user/.thunderbird/$profiledir
-#            if_running 'thunderbird' && run_cleaner
-#        done; echo
+#        if_running 'thunderbird'
+#        while read -r profiledir; do
+#            echo -e "[${YLW}$(echo $profiledir | cut -d'.' -f2)${RST}]"
+#            cd "/home/$user/.thunderbird/$profiledir"
+#            run_cleaner
+#        done < <(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//')
 #    else
 #        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
 #    fi
@@ -124,12 +129,12 @@ for user in $priv; do
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             cd /home/$user/.config/$b
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            if_running "$b"
             while read -r profiledir; do
-                echo -en "\n[${YLW}${profiledir##'./'}${RST}]"
+                echo -e "[${YLW}${profiledir##'./'}${RST}]"
                 cd "/home/$user/.config/$b/$profiledir"
-                if_running "$b" && run_cleaner
+                run_cleaner
             done < <(find . -maxdepth 1 -type d -iname "Default" -o -iname "Profile*")
-            echo
         else
             echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
             sleep 0.1; tput cuu 1; tput el
