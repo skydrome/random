@@ -17,37 +17,33 @@ spinner() {
     while [[ -d /proc/$1 ]]; do
         tmp=${str#?}
         printf "\e[00;31m %c " "$str"
-        str=$tmp${str%$tmp}
-        sleep 0.05
+            str=$tmp${str%$tmp}
+            sleep 0.05
         printf "\b\b\b"
     done
     printf "  \b\b\e[00m"
 }
 
 run_cleaner() {
+    # for each file that is an sqlite database vacuum and reindex
     while read -r db; do
-        # for each file that is an sqlite database vacuum and reindex
-        if [[ $(file "$db" | grep SQLite) ]]; then
-            echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
-            # Record size of each db before and after vacuuming
-            s_old=$(stat -c%s "$db")
-            (
-                trap '' INT TERM
-                sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
-            ) & spinner $!
-            s_new=$(stat -c%s "$db")
-            # convert to kilobytes
-            diff=$(((s_old - s_new) / 1024))
-            total=$((diff + total))
-            if (( $diff > 0 ))
-                then diff="- ${diff}${RST} KB"
-            elif (( $diff < 0 ))
-                then diff="+ $((diff * -1))${RST} KB"
-                else diff="∘"
-            fi
-            echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}${RST}"
-    fi
-    done < <(find . -maxdepth 1 -type f)
+        echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
+        # Record size of each db before and after vacuuming
+        s_old=$(stat -c%s "$db")
+        (   trap '' INT TERM
+            sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
+        ) & spinner $!
+        s_new=$(stat -c%s "$db")
+        diff=$(((s_old - s_new) / 1024)) # convert to kilobytes
+        total=$((diff + total))
+        if (( $diff > 0 ))
+            then diff="- ${diff}${RST} KB"
+        elif (( $diff < 0 ))
+            then diff="+ $((diff * -1))${RST} KB"
+            else diff="∘"
+        fi
+        echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}${RST}"
+    done < <(find . -maxdepth 1 -type f -print0 | xargs -0 file -e ascii | sed -n "s/:.*SQLite.*//p")
     echo
 }
 
@@ -63,7 +59,7 @@ if_running() {
             if [[ "$ans" = @(y|Y|yes) ]]; then
                 kill -TERM $(pgrep -u "$user" "$1")
                 sleep 4
-                # if still running, give monzy the microphone (stanford killdashnine)
+                # if still running, give monzy the microphone
                 [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
                     kill -KILL $(pgrep -u "$user" "$1")
                 break
@@ -76,15 +72,14 @@ if_running() {
 
 
 ##[ int main ]##
+# If we have sudo privs then run for all users on system
 priv="$USER"
-
-# If we have sudo privs then run for all users on system, else just run on self
 [[ "$EUID" = 0 ]] &&
     # This is slow but sometimes more accurate depending on distro
     #priv=$(grep 'home' /etc/passwd | cut -d':' -f6 | cut -c7-)
 
     # This is a couple milliseconds faster but assumes user names are same as the user's home directory
-    priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -d':' -f6 | cut -c7-)
+    priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -c7-)
 
 
 for user in $priv; do
@@ -109,20 +104,6 @@ for user in $priv; do
         fi
     done
 
-#[ THUNDERBIRD ]#  Useless
-#    echo -en "[${YLW}$user${RST}] ${GRN}Scanning for thunderbird${RST}"
-#    if [[ -f "/home/$user/.thunderbird/profiles.ini" ]]; then
-#        echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-#        if_running 'thunderbird'
-#        while read -r profiledir; do
-#            echo -e "[${YLW}$(echo $profiledir | cut -d'.' -f2)${RST}]"
-#            cd "/home/$user/.thunderbird/$profiledir"
-#            run_cleaner
-#        done < <(grep Path /home/$user/.thunderbird/profiles.ini | sed 's/Path=//')
-#    else
-#        echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
-#    fi
-
 #[ CHROMIUM GOOGLE-CHROME ]#
     for b in {chromium,google-chrome}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
@@ -143,5 +124,4 @@ for user in $priv; do
 done
 
 (( $total > 0 )) &&
-    echo -e "Total Space Cleaned: ${YLW}${total}${RST} KB" ||
-    echo -e "Nothing done."
+    echo -e "Total Space Cleaned: ${YLW}${total}${RST} KB" || echo "Nothing done."
