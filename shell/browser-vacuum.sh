@@ -37,12 +37,12 @@ run_cleaner() {
         diff=$(((s_old - s_new) / 1024)) # convert to kilobytes
         total=$((diff + total))
         if (( $diff > 0 ))
-            then diff="- ${diff}${RST} KB"
+            then diff="\e[01;33m- ${diff}${RST} KB"
         elif (( $diff < 0 ))
-            then diff="+ $((diff * -1))${RST} KB"
-            else diff="∘"
+            then diff="\e[01;30m+ $((diff * -1)) KB${RST}"
+            else diff="\e[00;33m∘${RST}"
         fi
-        echo -e "$(tput cr)$(tput cuf 46) ${GRN}done${RST} ${YLW}${diff}${RST}"
+        echo -e "$(tput cr)$(tput cuf 46) ${GRN}done ${diff}"
     done < <(find . -maxdepth 1 -type f -print0 | xargs -0 file -e ascii | sed -n "s/:.*SQLite.*//p")
     echo
 }
