@@ -8,5 +8,5 @@
 }
 
 eval $(grep '^pkgname=' PKGBUILD)
-colordiff ${@:--Naur} PKGBUILD \
-    <(curl -sk "https://aur.archlinux.org/packages/${pkgname:0:2}/$pkgname/PKGBUILD")
+colordiff ${@:--Naur} \
+    <(curl -sk "https://aur.archlinux.org/packages/${pkgname:0:2}/$pkgname/PKGBUILD") PKGBUILD
