@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 
-umask 077
 CERT_NAME="$1"
 XCHAT_DIR=("$2"
-           "~/.xchat"
-           "~/.xchat2"
-           "~/.config/hexchat/certs")
+           "$HOME/.xchat"
+           "$HOME/.xchat2"
+           "$HOME/.config/hexchat/certs")
 
 SUBJECT="/C=AN/ST=ON/L=YM/O=OUS/CN=$HOSTNAME/emailAddress=anon@mous"
 
 if [[ ! $1 ]]; then
-    echo -e "\n Usage:\n ./$(basename $0) [Network Name]\n"
-    exit 1
+    echo -e " Usage:\n ./$(basename $0) [Network Name]"
+    exit 0
 fi
 
 for configdir in ${XCHAT_DIR[@]}; do
@@ -19,21 +18,28 @@ for configdir in ${XCHAT_DIR[@]}; do
 done
 
 if [[ ! -d "$configdir" ]]; then
-    echo -e "\n Cant find your xchat config. Specify it manually:"
-    echo -e " ./$(basename $0) [Network Name] [Path to XChat Config Dir]\n"
+    echo "Cant find your xchat config. Specify it manually:"
+    echo " ./$(basename $0) [Network Name] [Path to XChat Config Dir]"
     exit 1
 fi
 
-cd "$configdir"
+if [[ -f "$configdir/$1.pem" ]]; then
+    echo "$1.pem already exists"
+    exit 1
+fi
+
+cd $(mktemp -d)
     openssl req -newkey rsa:2048 -nodes -days 365 -x509 -keyout tmp.key -out tmp.cert -subj "$SUBJECT"
     if [[ $? = 0 ]]; then
-        echo "Writing certificate to $CERT_NAME.pem"
-        cat tmp.cert tmp.key > ${CERT_NAME}.pem
-        rm tmp.cert tmp.key
+        echo "writing certificate to '$CERT_NAME.pem'"
+        cat tmp.cert tmp.key > "${CERT_NAME}.pem"
+        chmod 400 "${CERT_NAME}.pem"
+        mv "${CERT_NAME}.pem" "$configdir"
+        rm -rf $(pwd)
     else
-        echo "Certificate generation failed..."
+        echo "certificate generation failed..."
         exit 2
     fi
 
 echo -e "\n----- NICKSERV FINGERPRINT -----"
-echo -e "$(openssl x509 -sha1 -noout -fingerprint -in "${CERT_NAME}.pem" | sed -e 's/^.*=//;s/://g;y/ABCDEF/abcdef/')\n"
+echo -e "$(openssl x509 -sha1 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" |  sed -e 's/^.*=//;s/://g')\n"
