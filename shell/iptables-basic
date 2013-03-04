@@ -24,6 +24,11 @@
 # Allow SSH
 -A INPUT -p tcp -m state --state NEW --dport 22 -j ACCEPT
 
+# Prevent SSH Bruteforcing
+-A INPUT -p tcp --dport 22 -m state --state NEW -m recent --set --name SSH
+-A INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 --rttl --name SSH -j LOG --log-prefix "sshd_brute_force_block "
+-A INPUT -p tcp --dport 22 -m state --state NEW -m recent --update --seconds 60 --hitcount 4 --rttl --name SSH -j DROP
+
 # Allow ping
 -A INPUT -p icmp -m icmp --icmp-type 8 -j ACCEPT
 
