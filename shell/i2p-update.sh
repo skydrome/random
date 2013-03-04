@@ -96,7 +96,7 @@ build_i2p() {
         [[ $opt_no_build ]] && exit 0
         msg "Starting compile..."
         cd i2p.i2p
-        sed 's:require.gettext=true:require.gettext=false:' -i build.properties
+        export LG2=en
         if [[ $_new_install ]]; then
             ant installer-linux
             sudo mkdir -p $I2P_PATH ; sudo mv -v i2pinstall*.jar $I2P_PATH ; cd $I2P_PATH
@@ -115,8 +115,7 @@ build_i2p() {
 }
 
 build_wrapper() {
-_VER="3.5.15"
-_CFLAGS="-march=native"
+_VER="3.5.17"
 [[ $(uname -m) = "x86_64" ]] && _ARCH="64" || _ARCH="32"
 cd $BASEDIR
     if [[ ! -d "wrapper_${_VER}_src" ]]; then
@@ -126,7 +125,7 @@ cd $BASEDIR
     cd wrapper_${_VER}_src
     msg "Starting compile..."
     sudo $I2P_PATH/i2prouter stop
-    sed -i "s|gcc |gcc $_CFLAGS |" src/c/Makefile-linux-x86-${_ARCH}.make
+    sed -i "s|gcc |gcc -march=native |" src/c/Makefile-linux-x86-${_ARCH}.make
     ./build${_ARCH}.sh ; _E=$? ; check_return "./build${_ARCH}.sh java wrapper"
     strip --strip-unneeded bin/wrapper lib/libwrapper.so
         sudo install -v -m 644 bin/wrapper       $I2P_PATH/i2psvc
@@ -138,6 +137,5 @@ cd $BASEDIR
 
 #[ MAIN ]#
 [[ $opt_compile_wrapper ]] &&
-    build_wrapper ||
-    build_i2p
+    build_wrapper || build_i2p
 msg "Done!"
