@@ -18,7 +18,7 @@ bootstrap() {
 cd "$WORKING"
 md5sum i2p.mtn > MD5SUM
 mtn --db=i2p.mtn au pull "mtn.i2p-projekt.de?i2p.i2p"
-md5sum --check --status MD5SUM &&
+md5sum --check --status MD5SUM ||
 {
     cd "i2p.git"
     mtn --db "${WORKING}/i2p.mtn" git_export | git fast-import
