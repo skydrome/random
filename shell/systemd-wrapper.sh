@@ -20,7 +20,7 @@ cat <<EOF
     shut       |  poweroff
 
 EOF
-exit
+exit 0
 }
 
 (( $# >= 2 )) && {
@@ -29,10 +29,8 @@ exit
     shift
     sudo systemctl --system daemon-reload
     for arg in $* ;do
-        echo -n "${action}ing $arg ... "
+        echo "${action}ing $arg ... "
         sudo systemctl $action $arg
-        [[ $? = 0 ]] && echo 'done' || echo 'fail'
-        #sleep 2
     done
     exit
 }
@@ -41,7 +39,13 @@ exit
     case "$1" in
         list) systemctl list-units ;;
        fail*) systemctl --failed   ;;
-      reboot) systemctl reboot     ;;
+      reboot) echo -n "reboot: [y/n]: "
+                while read answer; do
+                case $answer in
+                    y|Y|Yes|YES|yes) systemctl reboot ;;
+                    *) exit 0 ;;
+                esac;done
+              ;;
        shut*) systemctl poweroff   ;;
            *) usage
     esac

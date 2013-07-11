@@ -37,10 +37,10 @@ check() {
     fi
     IFS=$OLD_IFS
 
-    [[ $addr = @($(our_ip)|127.0.0.1) ]] && {
-        echo "invalid: dont ban yourself!"
-        exit
-    }
+    #[[ $addr = @($(our_ip)|127.0.0.1) ]] && {
+    #    echo "invalid: dont ban yourself!"
+    #    exit
+    #}
 }
 
 read -p "Enter the IP to BAN and press [ENTER]: " addr
