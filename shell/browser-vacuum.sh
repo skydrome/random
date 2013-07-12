@@ -25,16 +25,17 @@ spinner() {
 }
 
 run_cleaner() {
-    # for each file that is an sqlite database vacuum and reindex
+    # for each file that is a sqlite database, vacuum and reindex
     while read -r db; do
         echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
-        # Record size of each db before and after vacuuming
+        # record size of each file before and after vacuuming
         s_old=$(stat -c%s "$db")
         (   trap '' INT TERM
             sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
         ) & spinner $!
         s_new=$(stat -c%s "$db")
-        diff=$(((s_old - s_new) / 1024)) # convert to kilobytes
+        # convert to kilobytes
+        diff=$(((s_old - s_new) / 1024))
         total=$((diff + total))
         if (( $diff > 0 ))
             then diff="\e[01;33m- ${diff}${RST} KB"
@@ -48,13 +49,13 @@ run_cleaner() {
 }
 
 if_running() {
-    i=7 # after this timeout, we give up waiting (i*2 seconds)
+    i=7 # after this timeout, we stop waiting (i*2 seconds seems good)
     [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
         echo -n "Waiting for "$1" to exit"
-    # Wait for <user's> <browser> to die
+    # wait for <browser> to terminate
     while [[ $(ps aux | grep "$1" | grep -v 'grep') ]];do
         if (( $i == 0 )); then
-            # waited long enough, ask to kill it
+            # waited long enough, ask if it should be killed
             read -p " kill it? [y|n]: " ans
             if [[ "$ans" = @(y|Y|yes) ]]; then
                 kill -TERM $(pgrep -u "$user" "$1")
@@ -71,34 +72,33 @@ if_running() {
 }
 
 
-##[ int main ]##
-# If we have sudo privs then run for all users on system
+# if ran with sudo, then run against all users on system
 priv="$USER"
 [[ "$EUID" = 0 ]] &&
-    # This is slow but sometimes more accurate depending on distro
-    #priv=$(grep 'home' /etc/passwd | cut -d':' -f6 | cut -c7-)
+    # sometimes more accurate depending on distro
+    #priv=$(grep 'home' /etc/passwd |cut -d':' -f6 |cut -c7-)
 
-    # This is a couple milliseconds faster but assumes user names are same as the user's home directory
-    priv=$(find /home -maxdepth 1 -type d | tail -n+2 | cut -c7-)
+    # assumes user names are same as the user's home directory
+    priv=$(find /home -maxdepth 1 -type d |tail -n+2 |cut -c7-)
 
 
 for user in $priv; do
 #[ FIREFOX ICECAT SEAMONKEY ]#
-    # Check for a <browser config> folder in each users home directory
+    # check for a <browser config> folder in each users home directory
     for b in {firefox,icecat,seamonkey}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
             echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
-            # Check if <browser> is *not* running before cleaning
+            # check if <browser> is *not* running before cleaning
             if_running "$b"
-            # We found one, now run the cleaner for each <browser profile>
+            # we found one, now run the cleaner for each <browser profile>
             while read -r profiledir; do
                 echo -e "[${YLW}$(echo $profiledir | cut -d'.' -f2)${RST}]"
                 cd "/home/$user/.mozilla/$b/$profiledir"
                 run_cleaner
             done < <(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//')
         else
-            # This user has no <browser config>
+            # this user has no <browser config>
             echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
             sleep 0.1; tput cuu 1; tput el
         fi
