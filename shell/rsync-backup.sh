@@ -44,6 +44,10 @@ EXCLUDE+=(
     Thumbs.db
 )
 
+INCLUDE=(
+    .backup
+)
+
 OPTS="--archive --relative --executability --owner --hard-links
       --delete --delete-excluded --sparse --progress"
 
@@ -53,16 +57,16 @@ type -P schedtool &>/dev/null &&
         renice -n 10 -p $$
     }
 
-i=0
-for f in ${EXCLUDE[@]}; do
-    EXCLUDE[$i]="--exclude $f"
-    ((i++))
+for (( i=0; i<${#EXCLUDE[@]}; i++ )); do
+    EXCLUDE[$i]="--exclude ${EXCLUDE[$i]}"
 done
 
 _rsync() {
     [[ -d "$1" || $(mkdir -p "$1") ]] &&
-        eval "sudo "$NICE" rsync "$OPTS" "${EXCLUDE[@]}" "${BACKUP[@]}" "$1"" &&
-            ran=true
+        eval "sudo "$NICE" \
+            rsync "$OPTS" \
+                  "${EXCLUDE[@]}" "${INCLUDE[@]}" \
+                  "${BACKUP[@]}" "$1"" && ran=true
 }
 
 for f in ${LOCATIONS[@]}; do
