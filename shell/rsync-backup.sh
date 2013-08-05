@@ -70,17 +70,12 @@ for (( i=0; i<${#EXCLUDE[@]}; i++ )); do
 done
 
 # create backup location and commence backup
-_rsync() {
-    [[ -d "$1" || $(mkdir -p "$1") ]] &&
-        eval "sudo "$NICE" $(which rsync) \
-                   "$OPTS" \
+for f in ${LOCATIONS[@]}; do
+    [[ -d "$f" || $(mkdir -p "$f") ]] &&
+        eval "sudo "$NICE" $(which rsync) "$OPTS" \
                    "${EXCLUDE[@]}" \
                    "${INCLUDE[@]}" \
-                   "${BACKUP[@]}" "$1"" && ran=true
-}
-
-for f in ${LOCATIONS[@]}; do
-    _rsync $f
+                   "${BACKUP[@]}" "$f"" && ran=true
 done
 
 # flush fs cache to disk
