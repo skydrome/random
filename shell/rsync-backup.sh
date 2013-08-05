@@ -63,10 +63,11 @@ done
 
 _rsync() {
     [[ -d "$1" || $(mkdir -p "$1") ]] &&
-        eval "sudo "$NICE" \
-            rsync "$OPTS" \
-                  "${EXCLUDE[@]}" "${INCLUDE[@]}" \
-                  "${BACKUP[@]}" "$1"" && ran=true
+        eval "sudo "$NICE" $(which rsync) \
+                   "$OPTS" \
+                   "${EXCLUDE[@]}"
+                   "${INCLUDE[@]}" \
+                   "${BACKUP[@]}" "$1"" && ran=true
 }
 
 for f in ${LOCATIONS[@]}; do
