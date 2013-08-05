@@ -17,7 +17,7 @@ BACKUP+=(
 
 # global excludes
 EXCLUDE+=(
-    /dev /etc/mtab /proc /run /sys /tmp
+    /dev /etc/mtab /proc /run /sys /tmp /var/{abs,tmp}
     #/var/cache/pacman/pkg
     /var/lib/pacman/sync
     *.o *.so
@@ -28,10 +28,14 @@ EXCLUDE+=(
     .java
     .kde*/{cache,socket,tmp}-*
     .local/share/Trash .Trash lost+found
+    .lock
     .mozilla/firefox/*/Cache
+    .config/chromium/*/Cookies
+    .config/chromium/*/{History,Local}*
     .zcompcache .zcompdump
     .DS_Store .thumbnails Thumbs.db
     ld.so.cache
+    fontconfig
 )
 
 # global includes
