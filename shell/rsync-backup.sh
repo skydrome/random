@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# github.com/skydrome/random/blob/master/shell/rsync-backup.sh             v1.0
 
 # read user config
 source ~/.backup
@@ -29,9 +30,8 @@ EXCLUDE+=(
     .kde*/{cache,socket,tmp}-*
     .local/share/Trash .Trash lost+found
     .lock
-    .mozilla/firefox/*/Cache
-    .config/chromium/*/Cookies
-    .config/chromium/*/{History,Local}*
+    .mozilla/firefox/*/{Cache,cookies.sqlite}
+    .config/chromium/*/{Cookies,History,Local}*
     .zcompcache .zcompdump
     .DS_Store .thumbnails Thumbs.db
     ld.so.cache
@@ -41,6 +41,7 @@ EXCLUDE+=(
 # global includes
 INCLUDE=(
     /home/$USER/.backup
+    #/etc/{bashrc,conf.d}
 )
 
 # rsync options
