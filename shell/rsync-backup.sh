@@ -5,7 +5,7 @@ source ~/.backup
 
 # additional backup locations
 LOCATIONS+=(
-    #/mnt/usb
+    #/mnt/usb{1,2,3}
     #/tmp/backup.$(date -I)
 )
 
@@ -17,35 +17,21 @@ BACKUP+=(
 
 # global excludes
 EXCLUDE+=(
-    /dev
-    /etc/mtab
-    /proc
-    /run
-    /sys
-    /tmp
+    /dev /etc/mtab /proc /run /sys /tmp
     #/var/cache/pacman/pkg
     /var/lib/pacman/sync
-    *.o
-    *.so
+    *.o *.so
     .cache
     .ccache
-    .DS_Store
-    .gimp-*/swap
-    .gimp-*/tmp
+    .gimp-*/{swap,tmp}
     .gvfs
     .java
-    .kde*/cache-*
-    .kde*/socket-*
-    .kde*/tmp-*
-    .local/share/Trash
+    .kde*/{cache,socket,tmp}-*
+    .local/share/Trash .Trash lost+found
     .mozilla/firefox/*/Cache
-    .thumbnails
-    .Trash
-    .zcompcache
-    .zcompdump
+    .zcompcache .zcompdump
+    .DS_Store .thumbnails Thumbs.db
     ld.so.cache
-    lost+found
-    Thumbs.db
 )
 
 # global includes
