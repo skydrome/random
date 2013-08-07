@@ -115,7 +115,10 @@ build_i2p() {
 }
 
 build_wrapper() {
-_VER="3.5.17"
+_VER="$(curl -s http://wrapper.tanukisoftware.com/doc/english/download.jsp \
+    |grep "Latest Stable Release" \
+    |sed 's|.*Latest Stable Release</a> (||;s|)</li>.*||')"
+
 [[ $(uname -m) = "x86_64" ]] && _ARCH="64" || _ARCH="32"
 cd $BASEDIR
     if [[ ! -d "wrapper_${_VER}_src" ]]; then

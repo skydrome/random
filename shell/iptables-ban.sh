@@ -1,19 +1,19 @@
 #!/bin/bash
 
-our_ip() {
-    tmp="/tmp/$(basename $0).cache"
-    if [[ ! -f "$tmp" || $(( $(date +"%s") - $(stat -c "%Y" $tmp) )) > 86400 ]]; then
-        IP=$(dig myip.opendns.com @resolver1.opendns.com +short) ||
-        IP=$(curl -s http://ifconfig.us) ||
-        IP=$(wget -qO- http://icanhazip.com) ||
-        IP=$(wget -qO- http://checkip.dyndns.org | sed 's/.*ss:\ //;s/<\/b.*//') ||
-        IP=$(wget -qO- http://myip.dnsomatic.com) ||
-        IP=$(wget -qO- http://ipecho.net/plain) ||
-        IP=$(curl --silent 'https://www.google.com/search?q=what+is+my+ip' | sed 's/.*Client IP address: //;s/).*//;q')
-        echo $IP >"$tmp"
-    fi
-    echo $(cat "$tmp")
-}
+#our_ip() {
+#    tmp="/tmp/$(basename $0).cache"
+#    if [[ ! -f "$tmp" || $(( $(date +"%s") - $(stat -c "%Y" $tmp) )) > 86400 ]]; then
+#        IP=$(dig myip.opendns.com @resolver1.opendns.com +short) ||
+#        IP=$(curl -s http://ifconfig.us) ||
+#        IP=$(wget -qO- http://icanhazip.com) ||
+#        IP=$(wget -qO- http://checkip.dyndns.org | sed 's/.*ss:\ //;s/<\/b.*//') ||
+#        IP=$(wget -qO- http://myip.dnsomatic.com) ||
+#        IP=$(wget -qO- http://ipecho.net/plain) ||
+#        IP=$(curl --silent 'https://www.google.com/search?q=what+is+my+ip' | sed 's/.*Client IP address: //;s/).*//;q')
+#        echo $IP >"$tmp"
+#    fi
+#    echo $(cat "$tmp")
+#}
 
 check() {
     OLD_IFS=$IFS IFS=.

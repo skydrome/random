@@ -7,8 +7,6 @@ pinger() {
     java -cp $I2P/lib/i2ptunnel.jar:$I2P/lib/mstreaming.jar:$I2P/lib/streaming.jar:$I2P/lib/i2p.jar net.i2p.i2ptunnel.I2PTunnel -cli "$@"
 }
 
-cd $I2P/.i2p
-
 if [[ "$DEST" ]]; then
     coproc PING { pinger; }
     KILLPID=$!

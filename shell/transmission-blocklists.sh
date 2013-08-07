@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 
-url=('http://list.iblocklist.com/?list=ijfqtofzixtwayqovmxn&fileformat=p2p&archiveformat=gz'
-     'http://list.iblocklist.com/?list=bt_level1&fileformat=p2p&archiveformat=gz')
+ursl=(
+    'http://list.iblocklist.com/?list=ijfqtofzixtwayqovmxn&fileformat=p2p&archiveformat=gz'
+    'http://list.iblocklist.com/?list=bt_level1&fileformat=p2p&archiveformat=gz'
+)
 
-name=('tbgprimarythreats' 'bluetacklevel1')
+lists=(
+    'tbgprimarythreats'
+    'bluetacklevel1'
+)
 
+mkdir -p ~/.config/transmission/blocklists
 cd ~/.config/transmission/blocklists
 
 ok='echo -e "\e[1;32m✔ ok\e[0m"'
