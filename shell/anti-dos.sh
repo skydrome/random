@@ -2,8 +2,7 @@
 
 webserver='httpd'  # name of webserver process
 
-while true
-do
+while true; do
     for ip in $(lsof -ni | grep "$webserver" | grep -iv listen | awk '{print $8}' | cut -d : -f 2 | sort | uniq | sed s/"http->"//); do
         numconns=$(lsof -ni | grep -c $ip)
         echo "$ip : $numconns"
