@@ -40,7 +40,7 @@ exit 0
         list) systemctl list-units ;;
        fail*) systemctl --failed   ;;
       reboot) echo -n "reboot: [y/n]: "
-                while read answer; do
+                while read -n1 answer; do
                 case $answer in
                     y|Y|Yes|YES|yes) systemctl reboot ;;
                     *) exit 0 ;;
