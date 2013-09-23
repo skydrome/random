@@ -9,11 +9,13 @@
 #
 
 RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
+format=$(tput cr)$(tput cuf 45)
 total=0
 
 spinner() {
+    local _format=$(tput cr)$(tput cuf 51)
     local str="oO0o.." tmp
-    tput cr; tput cuf 51
+    echo -en "$_format"
     while [[ -d /proc/$1 ]]; do
         tmp=${str#?}
         printf "\e[00;31m %c " "$str"
@@ -26,6 +28,7 @@ spinner() {
 
 run_cleaner() {
     # for each file that is a sqlite database, vacuum and reindex
+    local _format=$(tput cr)$(tput cuf 46)
     while read -r db; do
         echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
         # record size of each file before and after vacuuming
@@ -43,7 +46,7 @@ run_cleaner() {
             then diff="\e[01;30m+ $((diff * -1)) KB${RST}"
             else diff="\e[00;33m∘${RST}"
         fi
-        echo -e "$(tput cr)$(tput cuf 46) ${GRN}done ${diff}"
+        echo -e "${_format} ${GRN}done ${diff}"
     done < <(find . -maxdepth 1 -type f -print0 | xargs -0 file -e ascii | sed -n "s/:.*SQLite.*//p")
     echo
 }
@@ -81,14 +84,13 @@ priv="$USER"
     # assumes user names are same as the user's home directory
     priv=$(find /home -maxdepth 1 -type d |tail -n+2 |cut -c7-)
 
-
 for user in $priv; do
 #[ FIREFOX ICECAT SEAMONKEY ]#
     # check for a <browser config> folder in each users home directory
     for b in {firefox,icecat,seamonkey}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
-            echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            echo -e "$format [${GRN}found${RST}]"
             # check if <browser> is *not* running before cleaning
             if_running "$b"
             # we found one, now run the cleaner for each <browser profile>
@@ -99,7 +101,7 @@ for user in $priv; do
             done < <(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//')
         else
             # this user has no <browser config>
-            echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+            echo -e "$format [${RED}none${RST}]"
             sleep 0.1; tput cuu 1; tput el
         fi
     done
@@ -109,7 +111,7 @@ for user in $priv; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             cd /home/$user/.config/$b
-            echo -e "$(tput cr)$(tput cuf 45) [${GRN}found${RST}]"
+            echo -e "$format [${GRN}found${RST}]"
             if_running "$b"
             while read -r profiledir; do
                 echo -e "[${YLW}${profiledir##'./'}${RST}]"
@@ -117,7 +119,7 @@ for user in $priv; do
                 run_cleaner
             done < <(find . -maxdepth 1 -type d -iname "Default" -o -iname "Profile*")
         else
-            echo -e "$(tput cr)$(tput cuf 45) [${RED}none${RST}]"
+            echo -e "$format [${RED}none${RST}]"
             sleep 0.1; tput cuu 1; tput el
         fi
     done
