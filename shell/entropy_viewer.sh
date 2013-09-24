@@ -2,6 +2,7 @@
 
 timer="${1:-0.15}"
 poolsize=$(cat /proc/sys/kernel/random/poolsize)
+format="$(tput cuu 2)$(tput el)$(tput cuu 2)"
 
 while true; do
     ((i++))
@@ -18,5 +19,5 @@ while true; do
     printf " \n 0%25u\n" "$poolsize"
 
     sleep $timer
-    tput cuu 2; tput el; tput cuu 2
+    echo -en "$format"
 done
