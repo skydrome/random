@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-timer="${1:-0.15}"
+timer="${1:-0.10}"
 poolsize=$(cat /proc/sys/kernel/random/poolsize)
 format="$(tput cuu 2)$(tput el)$(tput cuu 2)"
 
 while true; do
     ((i++))
-
+    echo -n "$(tr -cd '[:graph:] ' </dev/random |head -c 60)"
     avail=$(cat /proc/sys/kernel/random/entropy_avail)
     total=$((total+avail))
     perc=$(((avail*100)/poolsize))

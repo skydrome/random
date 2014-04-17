@@ -9,17 +9,17 @@
 #
 
 RED="\e[01;31m" GRN="\e[01;32m" YLW="\e[01;33m" RST="\e[00m"
-format=$(tput cr)$(tput cuf 45)
+format="$(tput cr)$(tput cuf 45)"
 total=0
 
 spinner() {
-    local _format=$(tput cr)$(tput cuf 51)
+    local _format="$(tput cr)$(tput cuf 51)"
     local str="oO0o.." tmp
     echo -en "$_format"
     while [[ -d /proc/$1 ]]; do
         tmp=${str#?}
         printf "\e[00;31m %c " "$str"
-            str=$tmp${str%$tmp}
+            str="$tmp${str%$tmp}"
             sleep 0.05
         printf "\b\b\b"
     done
@@ -28,7 +28,7 @@ spinner() {
 
 run_cleaner() {
     # for each file that is a sqlite database, vacuum and reindex
-    local _format=$(tput cr)$(tput cuf 46)
+    local _format="$(tput cr)$(tput cuf 46)"
     while read -r db; do
         echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
         # record size of each file before and after vacuuming

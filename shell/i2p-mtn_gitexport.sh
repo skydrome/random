@@ -27,7 +27,7 @@ md5sum --check --status MD5SUM ||
     cd "i2p.git"
     mtn --db "${WORKING}/i2p.mtn" git_export |git fast-import
     [[ $1 = bootstrap ]] && git checkout i2p.i2p
-    git push origin HEAD:master
+    git push origin HEAD:master --force
 }
 
 rm MD5SUM
