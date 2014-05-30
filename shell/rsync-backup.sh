@@ -21,7 +21,8 @@ EXCLUDE+=(
     /dev /etc/mtab /proc /run /sys /tmp /var/{abs,tmp}
     #/var/cache/pacman/pkg
     /var/lib/pacman/sync
-    *.o *.so
+    *.o *.so *.po
+    autom4te.cache
     .cache
     .ccache
     .gimp-*/{swap,tmp}
