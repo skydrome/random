@@ -87,7 +87,7 @@ priv="$USER"
 for user in $priv; do
 #[ FIREFOX ICECAT SEAMONKEY ]#
     # check for a <browser config> folder in each users home directory
-    for b in {firefox,icecat,seamonkey}; do
+    for b in {firefox,icecat,seamonkey,aurora}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -f "/home/$user/.mozilla/$b/profiles.ini" ]]; then
             echo -e "$format [${GRN}found${RST}]"
@@ -107,7 +107,7 @@ for user in $priv; do
     done
 
 #[ CHROMIUM GOOGLE-CHROME ]#
-    for b in {chromium,google-chrome}; do
+    for b in {chromium,chromium-beta,chromium-dev,google-chrome,google-chrome-beta,google-chrome-unstable}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             cd /home/$user/.config/$b
