@@ -106,8 +106,8 @@ for user in $priv; do
         fi
     done
 
-#[ CHROMIUM GOOGLE-CHROME ]#
-    for b in {chromium,chromium-beta,chromium-dev,google-chrome,google-chrome-beta,google-chrome-unstable}; do
+#[ CHROMIUM GOOGLE-CHROME VIVALDI]#
+    for b in {chromium,chromium-beta,chromium-dev,google-chrome,google-chrome-beta,google-chrome-unstable,vivaldi,vivaldi-snapshot,vivaldi-beta}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
             cd /home/$user/.config/$b
