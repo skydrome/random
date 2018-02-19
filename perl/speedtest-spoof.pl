@@ -67,7 +67,8 @@ die $res->dump if $res->is_error;
 my %data = map { split '=' } split '&', $res->decoded_content;
 die "SpeedTest.net rejected our data :(" unless $data{resultid};
 
-printf "http://speedtest.net/result/%s.png\n", $data{resultid};
+printf "http://www.speedtest.net/my-result/%s\n", $data{resultid};
+printf "http://speedtest.net/result/%s.png (deprecated)\n", $data{resultid};
 exit;
 
 
