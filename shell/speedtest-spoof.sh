@@ -17,7 +17,7 @@ get_location() {
     lat="$(echo ${loc[0]} |cut -d'.' -f1)."
     lon="$(echo ${loc[1]} |cut -d'.' -f1)."
 
-    echo $($CURL http://www.speedtest.net/speedtest-servers.php \
+    echo $($CURL https://c.speedtest.net/speedtest-servers-static.php \
         |grep "lat=\"$lat.*lon=\"$lon" \
         |head -n1 |sed 's/.*id="//;s/"  host.*//;s/".*\/>//')
 }
@@ -36,7 +36,7 @@ spoof() {
     echo $($CURL 'http://www.speedtest.net/api/api.php'\
             --referer 'http://c.speedtest.net/flash/speedtest.swf' \
             -F hash="$h" -F ping="$p" -F upload="$u" -F download="$d" -F serverid="$s" \
-        |cut -d'&' -f1 |cut -d'=' -f2)
+        |cut -d'&' -f2 |cut -d'=' -f2)
 }
 
-echo " http://www.speedtest.net/result/$(spoof).png "
+echo " http://www.speedtest.net/result/$(spoof).png"
