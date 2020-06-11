@@ -25,12 +25,13 @@ EXCLUDE+=(
     autom4te.cache
     .cache
     .ccache
+    .cargo
     .gimp-*/{swap,tmp}
     .gvfs
     .java
     .kde*/{cache,socket,tmp}-*
     .local/share/Trash .Trash lost+found
-    .lock
+    .lock .sock .socket
     .mozilla/firefox/*/{Cache,cookies.sqlite}
     .config/chromium/*/{Cookies,History,Local}*
     .zcompcache .zcompdump
@@ -46,28 +47,29 @@ INCLUDE=(
 )
 
 # rsync options
-OPTS="--archive --relative --executability --owner --hard-links
-      --delete --delete-excluded --sparse --protect-args --progress"
+OPTS="-a -u --delete --delete-excluded --protect-args --progress"
 
-# throttle IO priority to the background
-type -P schedtool &>/dev/null &&
-    NICE="schedtool -D -e" || {
-        ionice -c  3 -p $$
-        renice -n 10 -p $$
-    }
+
+
+# # throttle IO priority to the background
+# type -P schedtool &>/dev/null &&
+#     NICE="schedtool -D -e" || {
+#         ionice -c  3 -p $$
+#         renice -n 10 -p $$
+#     }
 
 # convert excludes array into rsync options
 for (( i=0; i<${#EXCLUDE[@]}; i++ )); do
-    EXCLUDE[$i]="--exclude '${EXCLUDE[$i]}'"
+    EXCLUDE[$i]="--exclude='${EXCLUDE[$i]}'"
 done
 
 # create backup location and commence backup
 for f in ${LOCATIONS[@]}; do
-    [[ -w "$f" || $(mkdir -p "$f") ]] &&
-        eval "sudo "$NICE" $(which rsync) "$OPTS" \
+    #[[ -w "$f" || $(mkdir -p "$f") ]] &&
+        sudo $(which rsync) $OPTS \
                    "${EXCLUDE[@]}" \
                    "${INCLUDE[@]}" \
-                   "${BACKUP[@]}" "$f"" && ran=true
+                   "${BACKUP[@]}" "$f" && ran=true
 done
 
 # flush fs cache to disk

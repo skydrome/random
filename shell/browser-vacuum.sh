@@ -32,7 +32,7 @@ run_cleaner() {
     while read -r db; do
         echo -en "${GRN} Cleaning${RST}  ${db##'./'}"
         # record size of each file before and after vacuuming
-        s_old=$(stat -c%s "$db")
+        s_old=$(stat -c%s "$db" 2>/dev/null) || s_old=4096
         (   trap '' INT TERM
             sqlite3 "$db" "VACUUM;" && sqlite3 "$db" "REINDEX;"
         ) & spinner $!
@@ -40,32 +40,32 @@ run_cleaner() {
         # convert to kilobytes
         diff=$(((s_old - s_new) / 1024))
         total=$((diff + total))
-        if (( $diff > 0 ))
+        if (( diff > 0 ))
             then diff="\e[01;33m- ${diff}${RST} KB"
-        elif (( $diff < 0 ))
+        elif (( diff < 0 ))
             then diff="\e[01;30m+ $((diff * -1)) KB${RST}"
             else diff="\e[00;33m∘${RST}"
         fi
         echo -e "${_format} ${GRN}done ${diff}"
-    done < <(find . -maxdepth 1 -type f -print0 | xargs -0 file -e ascii | sed -n "s/:.*SQLite.*//p")
+    done < <(find . -maxdepth 1 -type f -print0 |xargs -0 file -e ascii |sed -n "s/:.*SQLite.*//p")
     echo
 }
 
 if_running() {
-    i=7 # after this timeout, we stop waiting (i*2 seconds seems good)
-    [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
-        echo -n "Waiting for "$1" to exit"
+    i=6 # after this timeout, we stop waiting (i*2 seconds seems good)
+    [[ $(ps aux |grep -v 'grep' |grep "$1" |grep "$user") ]] &&
+        echo -n "Waiting for $1 to exit"
     # wait for <browser> to terminate
-    while [[ $(ps aux | grep "$1" | grep -v 'grep') ]];do
-        if (( $i == 0 )); then
+    while [[ $(ps aux |grep "$1" |grep -v 'grep') ]];do
+        if (( i == 0 )); then
             # waited long enough, ask if it should be killed
             read -p " kill it? [y|n]: " ans
             if [[ "$ans" = @(y|Y|yes) ]]; then
-                kill -TERM $(pgrep -u "$user" "$1")
+                kill -TERM "$(pgrep -u "$user" "$1")"
                 sleep 4
                 # if still running, give monzy the microphone
-                [[ $(ps aux | grep -v 'grep' | grep "$1" | grep "$user") ]] &&
-                    kill -KILL $(pgrep -u "$user" "$1")
+                [[ $(ps aux |grep -v 'grep' |grep "$1" |grep "$user") ]] &&
+                    kill -KILL "$(pgrep -u "$user" "$1")"
                 break
             fi
         fi
@@ -95,10 +95,10 @@ for user in $priv; do
             if_running "$b"
             # we found one, now run the cleaner for each <browser profile>
             while read -r profiledir; do
-                echo -e "[${YLW}$(echo $profiledir | cut -d'.' -f2)${RST}]"
+                echo -e "[${YLW}$(echo "$profiledir" |cut -d'.' -f2)${RST}]"
                 cd "/home/$user/.mozilla/$b/$profiledir"
                 run_cleaner
-            done < <(grep Path /home/$user/.mozilla/$b/profiles.ini | sed 's/Path=//')
+            done < <(grep Path "/home/$user/.mozilla/$b/profiles.ini" |sed 's/Path=//')
         else
             # this user has no <browser config>
             echo -e "$format [${RED}none${RST}]"
@@ -110,7 +110,7 @@ for user in $priv; do
     for b in {chromium,chromium-beta,chromium-dev,google-chrome,google-chrome-beta,google-chrome-unstable}; do
         echo -en "[${YLW}$user${RST}] ${GRN}Scanning for $b${RST}"
         if [[ -d "/home/$user/.config/$b/Default" ]]; then
-            cd /home/$user/.config/$b
+            cd "/home/$user/.config/$b"
             echo -e "$format [${GRN}found${RST}]"
             if_running "$b"
             while read -r profiledir; do
@@ -125,5 +125,5 @@ for user in $priv; do
     done
 done
 
-(( $total > 0 )) &&
+(( total > 0 )) &&
     echo -e "Total Space Cleaned: ${YLW}${total}${RST} KB" || echo "Nothing done."
