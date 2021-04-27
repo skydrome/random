@@ -43,5 +43,5 @@ cd $(mktemp -d)
     fi
 
 echo -e "\n----- NICKSERV FINGERPRINT -----"
-echo -e "SHA1:  $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha1   |sed -e 's/^.*=//;s/://g')\n"
-echo -e "SHA256:$(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha256 |sed -e 's/^.*=//;s/://g')\n"
+echo -e "  SHA1: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha1   |sed -e 's/^.*=//;s/://g')\n"
+echo -e "SHA256: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha256 |sed -e 's/^.*=//;s/://g')\n"
