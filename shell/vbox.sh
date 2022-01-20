@@ -30,7 +30,7 @@ case "$1" in
         ;;
     stop)
         echo "Stopping VM ..."
-        vboxmanage controlvm "$vm" poweroff
+        vboxmanage controlvm "$vm" acpipowerbutton
         ;;
     *)
         echo "Usage:"
