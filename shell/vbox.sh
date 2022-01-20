@@ -15,7 +15,7 @@ case "$1" in
             ((i++))
             sleep 5
         done
-        if [[ ! -z "$password" || "$password" = "" ]]; then
+        if [[ -n "$password" ]]; then
             echo "$password" >pass
             vboxmanage controlvm "$vm" removeallencpasswords
             sleep 1
