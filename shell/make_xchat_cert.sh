@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# use client.pem for default
 
 CERT_NAME="$1"
 XCHAT_DIR=(
@@ -13,7 +14,7 @@ if [[ ! $1 ]]; then
     exit 0
 fi
 
-for configdir in ${XCHAT_DIR[@]}; do
+for configdir in "${XCHAT_DIR[@]}"; do
     [[ -d "$configdir" ]] && break
 done
 
@@ -28,20 +29,18 @@ if [[ -f "$configdir/$1.pem" ]]; then
     exit 1
 fi
 
-cd $(mktemp -d)
-    # 10yrs
-    openssl req -newkey rsa:4096 -nodes -days 3650 -x509 -keyout tmp.key -out tmp.cert -subj "$SUBJECT"
-    if [[ $? = 0 ]]; then
-        echo "writing certificate to '$CERT_NAME.pem'"
-        cat tmp.cert tmp.key > "${CERT_NAME}.pem"
+cd "$(mktemp -d)" ||exit 1
+    echo "writing certificate to '$CERT_NAME.pem'"
+    openssl req -newkey ed25519 -nodes -days 7300 -x509 -keyout "${CERT_NAME}.pem" -out "${CERT_NAME}.pem" -subj "$SUBJECT"
+    if (( $? == 0 )); then
         chmod 400 "${CERT_NAME}.pem"
-        mv "${CERT_NAME}.pem" "$configdir"
-        rm -rf $(pwd)
+        mv -v "${CERT_NAME}.pem" "$configdir"
+        rm -r "$(pwd)"
     else
         echo "certificate generation failed..."
         exit 2
     fi
 
-echo -e "\n----- NICKSERV FINGERPRINT -----"
-echo -e "  SHA1: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha1   |sed -e 's/^.*=//;s/://g')\n"
-echo -e "SHA256: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha256 |sed -e 's/^.*=//;s/://g')\n"
+echo "FINGERPRINTS:"
+echo "SHA256: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha256 |awk -F= '{gsub(":",""); print($2)}')"
+echo "SHA512: $(openssl x509 -noout -fingerprint -in "$configdir/${CERT_NAME}.pem" -sha512 |awk -F= '{gsub(":",""); print($2)}')"
