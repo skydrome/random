@@ -51,8 +51,10 @@ proc formatMsg {fromNick msg} {
 }
 
 proc log {level msg} {
-    puts [format "\[%s\] \[%-6s\] %s\033\[0m" \
-        [clock format [clock seconds] -format "%H:%M:%S"] $level $msg]
+    set ms [clock milliseconds]
+    puts [format "\[%s.%03d\] \[%-6s\] %s\033\[0m" \
+         [clock format [expr {$ms / 1000}] -format "%H:%M:%S"] \
+         [expr {$ms % 1000}] $level $msg]
 }
 
 
@@ -62,43 +64,6 @@ array set nickColors {}
 array set userHostmasks {}
 array set contextToName {}
 array set msgDedup {}
-set colorCleanupTimer ""
-set msgDedupTimer ""
-
-proc initColorCleanup {} {
-    global colorCleanupTimer
-
-    # cancel existing timer if any
-    if {$colorCleanupTimer ne ""} {
-        catch {after cancel $colorCleanupTimer}
-    }
-
-    # schedule next cleanup (5 minutes)
-    set colorCleanupTimer [after [expr {5 * 60000}] {
-        cleanupExpiredColors
-        initColorCleanup
-    }]
-}
-
-proc cleanupExpiredColors {} {
-    global nickColors colorCacheTime
-
-    set now [clock milliseconds]
-    set cacheTimeMs [expr {$colorCacheTime * 60000}]
-    set expired {}
-
-    # find all expired entries
-    foreach {nick data} [array get nickColors] {
-        lassign $data colorName timestamp
-        if {($now - $timestamp) > $cacheTimeMs} {
-            lappend expired $nick
-        }
-    }
-    # and remove them
-    foreach nick $expired {
-        unset nickColors($nick)
-    }
-}
 
 proc getNickColor {nick} {
     global nickColors nickColorList color
@@ -127,30 +92,58 @@ proc getNickColor {nick} {
     return $color($colorName)
 }
 
-proc initDedup {} {
-    global msgDedup msgDedupTimer
-    array set msgDedup {}
+proc colorCleanup {} {
+    global nickColors colorCacheTime
 
-    # schedule cleanup every minute
-    set msgDedupTimer [after 60000 {
-        cleanupDedupCache
-        initDedup
-    }]
-}
+    while {1} {
+        if {[catch {
+            # Wait 5 minutes before next cleanup
+            after [expr {5 * 60000}] [info coroutine]
+            yield
 
-proc cleanupDedupCache {} {
-    global msgDedup spamWindow
-    set now [clock seconds]
-    set expired {}
+            set now [clock milliseconds]
+            set cacheTimeMs [expr {$colorCacheTime * 60000}]
+            set expired {}
 
-    foreach {hash data} [array get msgDedup] {
-        lassign $data count timestamp
-        if {($now - $timestamp) > $spamWindow} {
-            lappend expired $hash
+            foreach {nick data} [array get nickColors] {
+                lassign $data colorName timestamp
+                if {($now - $timestamp) > $cacheTimeMs} {
+                    lappend expired $nick
+                }
+            }
+            foreach nick $expired {
+                unset nickColors($nick)
+            }
+        } err]} {
+            log "ERROR" "colorCleanup error: $err"
         }
     }
-    foreach hash $expired {
-        unset msgDedup($hash)
+}
+
+proc dedupCleanup {} {
+    global msgDedup spamWindow
+
+    while {1} {
+        if {[catch {
+            # Wait 1 minute before next cleanup
+            after 60000 [info coroutine]
+            yield
+
+            set now [clock seconds]
+            set expired {}
+
+            foreach {hash data} [array get msgDedup] {
+                lassign $data count timestamp
+                if {($now - $timestamp) > $spamWindow} {
+                    lappend expired $hash
+                }
+            }
+            foreach hash $expired {
+                unset msgDedup($hash)
+            }
+        } err]} {
+            log "ERROR" "dedupCleanup error: $err"
+        }
     }
 }
 
@@ -252,18 +245,29 @@ proc shouldIgnore {ctx hostmask} {
 }
 
 proc handleIrcCmd {ctx channel nick cmd connName args} {
-    global connections color config
+    global connections color config commandPrefix
 
     switch -exact -- $cmd {
+        help {
+            set help_msg [list \
+                "-Available Commands-" \
+                " ${commandPrefix} status" \
+                " ${commandPrefix} reconnect <server>"
+            ]
+            foreach line $help_msg {
+                picoirc::post $ctx "" "NOTICE $nick :$line"
+            }
+        }
         reconnect {
             set targetConn [lindex $args 0]
             if {$targetConn ne "" && [info exists connections($targetConn)]} {
                 log "CMD" "\033\[94m$nick requested reconnect $targetConn from $connName"
-                reconnectServer $targetConn
+                startReconnection $targetConn 1
+            } {
+                picoirc::post $ctx "" "NOTICE $nick :server name empty or doesnt exist"
             }
         }
         status - "" {
-            log "CMD" "\033\[34m$nick requested status from $connName"
             set statusLines {}
             foreach {name info} [array get connections] {
                 if {[dict get $info context] eq $ctx} {continue}
@@ -303,7 +307,7 @@ proc ircCallback {ctx state args} {
                 dict set connections($connName) reconnectDelay 5
                 dict set connections($connName) connected 1
             }
-            log "CONN" "\033\[32mConnected to server: $connName ($ctx)"
+            log "CONN" "\033\[32mConnected to \033\[32;1m$connName"
         }
         chat {
             lassign $args channel nick msg type
@@ -379,19 +383,19 @@ proc ircCallback {ctx state args} {
         }
         system {
             lassign $args channel message
-            if {$message ne ""} {
+            if {$message ne "" || ![string match -nocase "*253*" $message]} {
                 log "SYSTEM" "\033\[033m$message"
             }
 
             # set bot mode after registration (396 = RPL_HOSTHIDDEN)
             if {[string match "*396*" $message]} {
-                picoirc::post $ctx "" "/mode $connNick +BDTip-w"
+                picoirc::post $ctx "" "MODE $connNick +BDTip-w"
                 # TODO: use config if u want
                 # if {$connName ne ""} {
                 #     if {[dict exists $connections($connName) user_modes]} {
                 #         set userModes [dict get $connections($connName) user_modes]
                 #         if {$userModes ne ""} {
-                #             picoirc::post $ctx "" "/mode $connNick $userModes"
+                #             picoirc::post $ctx "" "MODE $connNick $userModes"
                 #             #log "INFO" "Set user mode $userModes for $connNick"
                 #         }
                 #     }
@@ -404,7 +408,7 @@ proc ircCallback {ctx state args} {
             # 464 (bad password)
             if {[string match -nocase "*error*" $message] ||
                 [string match -nocase "*closing link*" $message] ||
-                [string match -nocase "*465*" $message]} {
+                [string match "*465*" $message]} {
 
                 if {$connName ne ""} {
                     set disconnMsg "\001ACTION ${connName} link ${color(red)}severed ${color(grey)}(connection lost)\001"
@@ -419,7 +423,7 @@ proc ircCallback {ctx state args} {
             }
         }
         close {
-            log "CLOSE" "\033\[91mConnection closed: $ctx"
+            log "CLOSE" "\033\[91mConnection closed: $connName"
             if {[llength $args] > 0} {log "ERROR" "\033\[31mClose reason: [lindex $args 0]"}
 
             if {$connName ne "" && [info exists connections($connName)]} {
@@ -435,7 +439,7 @@ proc ircCallback {ctx state args} {
                         }
                     }
                     dict set connections($connName) connected 0
-                    scheduleReconnect $connName
+                    startReconnection $connName 0
                 }
 
                 # clean up context map
@@ -473,7 +477,7 @@ proc connectServer {name config} {
     set contextToName($ctx) $name
 
     set reconnectDelay 5
-    if {[info exists connections($name)]} {
+    if {[info exists connections($name)] && [dict exists $connections($name) reconnectDelay]} {
         set reconnectDelay [dict get $connections($name) reconnectDelay]
     }
 
@@ -486,84 +490,105 @@ proc connectServer {name config} {
         ignore_hostmasks [dict get $config ignore_hostmasks] \
         reconnectDelay $reconnectDelay \
         connected 0 \
-        reconnectTimer ""]
+        reconnect ""]
 
     return $ctx
 }
 
-proc reconnectServer {name} {
-    global connections config contextToName
+proc reconnection {name {triggered 0}} {
+    global connections config maxReconnectDelay
 
-    if {![info exists connections($name)]} {
-        log "ERROR" "Cannot reconnect unknown connection: $name"
+    while {1} {
+        # check if connection still exists (might have been cleaned up)
+        if {![info exists connections($name)]} {
+            log "INFO" "\033\[38;5;208mReconnection coroutine for $name stopping (connection removed)"
+            return
+        }
+
+        # wait for delay period
+        if {!$triggered} {
+            set delay [dict get $connections($name) reconnectDelay]
+            log "INFO" "\033\[38;5;208mScheduling reconnect for $name in $delay seconds"
+            after [expr {$delay * 1000}] [info coroutine]
+            yield
+        }
+
+        # check again after yield (connection might have been removed during wait)
+        if {![info exists connections($name)]} {
+            log "INFO" "\033\[38;5;208mReconnection coroutine for $name stopping (connection removed)"
+            return
+        }
+
+        if {![dict exists $config $name]} {
+            log "ERROR" "Cannot find config for: $name"
+            return
+        }
+
+        if {[dict exists $connections($name) context]} {
+            set oldCtx [dict get $connections($name) context]
+            catch {picoirc::post $oldCtx "" "QUIT :221 Goodbye."}
+        }
+
+        # attempt reconnection
+        if {[catch {connectServer $name [dict get $config $name]} err]} {
+            log "ERROR" "Failed to reconnect $name: $err"
+            # exponential backoff (only for automatic reconnects)
+            if {!$triggered} {
+                set delay [expr {min($delay * 2, $maxReconnectDelay)}]
+                dict set connections($name) reconnectDelay $delay
+                continue
+            } else {
+                dict set connections($name) reconnect ""
+                return
+            }
+        }
+
+        log "INFO" "\033\[38;5;214mReconnected to $name"
+
+        # clear the coroutine reference since we're done
+        dict set connections($name) reconnect ""
+        # exit coroutine after successful reconnection
         return
     }
-
-    # clean up old connection
-    set oldCtx [dict get $connections($name) context]
-    catch {picoirc::post $oldCtx "" "/quit"}
-
-    # Don't unset contextToName here - let the close event handle it
-    # This allows system event to still find the connection name
-
-    if {![dict exists $config $name]} {
-        log "ERROR" "Cannot find config for: $name"
-        return
-    }
-
-    # attempt reconnection
-    if {[catch {connectServer $name [dict get $config $name]} err]} {
-        log "ERROR" "Failed to reconnect $name: $err"
-        scheduleReconnect $name
-        return 0
-    }
-
-    log "INFO" "\033\[38;5;214mReconnecting to $name"
-    return 1
 }
 
-proc scheduleReconnect {name} {
-    global connections maxReconnectDelay
+proc startReconnection {name {triggered 0}} {
+    global connections
 
-    if {![info exists connections($name)]} {return}
-
-    set info $connections($name)
-    set oldTimer [dict get $info reconnectTimer]
-    if {$oldTimer ne ""} {catch {after cancel $oldTimer}}
-
-    set delay [dict get $info reconnectDelay]
-    log "INFO" "\033\[38;5;208mScheduling reconnect for $name in $delay seconds"
-    set timer [after [expr {$delay * 1000}] [list reconnectServer $name]]
-
-    # only update if connection still exists (prevents orphaned timers)
-    if {[info exists connections($name)]} {
-        dict set connections($name) reconnectTimer $timer
-        # exponential backoff
-        dict set connections($name) reconnectDelay [expr {min($delay * 2, $maxReconnectDelay)}]
-    } else {
-        catch {after cancel $timer}
+    if {![info exists connections($name)]} {
+        log "ERROR" "Cannot start reconnection for unknown connection: $name"
+        return
     }
+
+    # check if reconnection coroutine already exists
+    set existingCoro [dict get $connections($name) reconnect]
+    if {$existingCoro ne "" && [info commands $existingCoro] ne ""} {
+        log "INFO" "\033\[38;5;208mReconnection already in progress for $name"
+        return
+    }
+
+    # create and store new reconnection coroutine
+    set coroName "reconnect_${name}"
+    coroutine $coroName reconnection $name $triggered
+    dict set connections($name) reconnect $coroName
 }
 
 # trap handler
 proc cleanup {} {
-    global connections contextToName colorCleanupTimer msgDedupTimer
+    global connections contextToName
 
     log "INFO" "\033\[31mShutting down..."
 
-    # cancel cleanup timers
-    if {$colorCleanupTimer ne ""} {
-        catch {after cancel $colorCleanupTimer}
-    }
-    if {$msgDedupTimer ne ""} {
-        catch {after cancel $msgDedupTimer}
-    }
+    catch {rename colorCleanupCoro ""}
+    catch {rename dedupCleanupCoro ""}
 
     foreach {name info} [array get connections] {
-        set timer [dict get $info reconnectTimer]
-        if {$timer ne ""} {catch {after cancel $timer}}
+        set coro [dict get $info reconnect]
+        if {$coro ne "" && [info commands $coro] ne ""} {
+            catch {rename $coro ""}
+        }
         set ctx [dict get $info context]
-        catch {picoirc::post $ctx "" "/quit"}
+        catch {picoirc::post $ctx "" "QUIT :221 Goodbye."}
         catch {unset contextToName($ctx)}
     }
     exit 0
@@ -579,7 +604,7 @@ proc consoleInput {} {
             "status" - ".status" {
                 global connections
                 foreach {name info} [array get connections] {
-                    log "STATUS" "$name: [expr {[dict get $info connected] ? "\033\[92mOnline" : "\033\[91mOffline"}]"
+                    log "STATUS" "$name: [expr {[dict get $info connected] ? "\033\[92mOnline" : "\033\[91mOffline"}] (Backoff: [dict get $info reconnectDelay]s)"
                 }
             }
         }
@@ -591,8 +616,8 @@ proc consoleInput {} {
 proc main {} {
     global config
 
-    initColorCleanup
-    initDedup
+    coroutine colorCleanupCoro colorCleanup
+    coroutine dedupCleanupCoro dedupCleanup
 
     dict for {name serverConfig} $config {
         if {[catch {connectServer $name $serverConfig} err]} {
