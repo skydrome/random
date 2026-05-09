@@ -1,38 +1,34 @@
 #!/usr/bin/env bash
-export LC_ALL=C
+#shellcheck disable=SC2317
 
 #++++++++++#++++++++++#++++++++++#++++++++#
-PASSKEY=''
-HOST=""
-OPTS="--user-agent uTorrent/2220"
-PEER_ID='-UT2220-%85O%CB%44%F6JPz%FP21%4E'
+OPTS+=(--user-agent uTorrent/2220)
+OPTS+=(--proxy socks5h://127.0.0.1:9050)
+PEER_ID='-UT2220-jVbyEgNLh5q5'
+PORT=$(shuf -i 6881-64999 -n1)
+ANNOUNCE_INTERVAL=1800
 #++++++++++#++++++++++#++++++++++#++++++++#
 
-# install ruby script to get torrent info_hash
-if [[ ! -x "$HOME/bin/hash.rb" ]]; then
+# install ruby to get torrent info
+command -v ruby >/dev/null ||
     sudo pacman -S --noconfirm --needed -q ruby
-    gem install -Nq bencode
+ruby -e "require 'bencode'" >/dev/null ||
+    gem install bencode
 
-    cd "$HOME/bin"
-cat > hash.rb <<EOF
-#!/usr/bin/env ruby
-require 'bencode'
-require 'digest/sha1'
-ARGV.each do|file|
-    torrent     = BEncode.load_file( file )
-    info_hash   = Digest::SHA1.hexdigest( torrent['info'].bencode )
-    puts "#{info_hash.upcase}"
-end
-EOF
-    chmod +x hash.rb
-fi
+twenty_bite_me() {
+    local padding
+    # echo -n "[+] padding PEER_ID to 20 bytes... " >&2
+    padding=$(head -c 1000 /dev/urandom |tr -dc 'a-zA-Z0-9' |head -c $((20 - ${#PEER_ID})))
+    # echo "$padding" >&2
+    echo "${PEER_ID}${padding}"
+}
 
 urldecode() {
-    echo "$1" |sed -e's/%\([0-9A-F][0-9A-F]\)/\\\\\x\1/g' |xargs echo -e
+    printf '%b\n' "${1//%/\\x}" |tr -d '\0'
 }
 
 engage_afterburner() {
-    local mb gb lo hi
+    local mb gb lo hi fire
     mb=1000000
     gb=1000000000
 
@@ -42,32 +38,71 @@ engage_afterburner() {
     lo=$(( mb * 250 ))
     hi=$(( gb * 2 ))
 
-    shuf -i ${lo}-${hi} -n1
+    fire=$(shuf -i ${lo}-${hi} -n1)
+    echo "[+] sending... $((fire / mb)) mb" >&2
+    echo "$fire"
 }
 
-cd "$HOME/Downloads"
-find . -maxdepth 1 -type f -name '*.torrent' -print0 |while IFS= read -r -d '' f; do
-    # convert spaces to underlines in filenames
-    file=$(echo "$f" |sed 's/ /\_/g')
-    [[ ! -f "$file" ]] && mv "$f" "$file"
+get_torrent_info() {
+    local IFS='|'
+    read -r name announce_url hash < <(TORRENT="$1" ruby <<RUBY
+        require 'bencode'
+        require 'digest/sha1'
+        begin
+          torrent = BEncode.load_file(ENV['TORRENT'])
+          name = torrent['info']['name']
+          announce_url = torrent['announce']
+          info_hash = Digest::SHA1.hexdigest(torrent['info'].bencode)
+          puts "#{name}|#{announce_url}|#{info_hash}"
+        end
+RUBY
+    ) || {
+        echo "Error parsing torrent" >&2
+        return 1
+    }
+}
 
-    # get info_hash and decode alphanum characters
-    hash.rb "$file" | sed "s/.\{2\}/&\n/g" |sed '$ d' \
-        | while read line; do
+cd "$HOME/Downloads" ||exit 1
+
+while true; do
+    for ((i=ANNOUNCE_INTERVAL; i>=0; i-=1)); do
+        [[ ! $__ranonce__ ]] && i=0
+        minutes=$((i / 60))
+        seconds=$((i % 60))
+        printf "\rNext announce in %02d:%02d" "$minutes" "$seconds"
+        sleep 1
+    done
+    echo -ne "\r"
+
+    total=$(find . -maxdepth 1 -type f -name '*.torrent' |wc -l)
+    current=0
+
+    while IFS= read -r -d '' file; do
+        get_torrent_info "$file"
+
+        ((++current))
+        echo "[$current/$total] $name" >&2
+        #echo "[+] torrent hash... $hash" >&2
+
+        unset HASH
+        for ((i=0; i<${#hash}; i+=2)); do
+            line="${hash:$i:2}"
             _test=$(urldecode "%${line}")
             case "$_test" in
-            [a-zA-Z]) # good decode
-                      _HASH+="$_test" ;;
-                   *) # character is rubbish keep it encoded
-                      _HASH+="%$line" ;;
+                [a-zA-Z]) # good decode
+                    HASH+="$_test" ;;
+                *) # character is rubbish keep it encoded
+                    HASH+="%$line" ;;
             esac
-        # for some reason this variable disappears out of this loop
-        echo "$_HASH" >.tmp
-    done
-    HASH=$(cat .tmp)
-    rm -f .tmp
+        done
+        #echo "[+] encoded hash... $HASH" >&2
 
-    # and bob's your auntie
-    curl $OPTS ${HOST}/${PASSKEY}/announce?info_hash=${HASH}&peer_id=${PEER_ID}&port=31515&uploaded=$(engage_afterburner)&downloaded=0&left=0&compact=1&event=completed
+        # and bob's your auntie
+        url="${announce_url}?info_hash=${HASH}&peer_id=$(twenty_bite_me)&port=${PORT}&uploaded=$(engage_afterburner)&downloaded=0&left=0&compact=1&numwant=0&event=completed"
+        curl -s "${OPTS[@]}" "$url" --output - |ruby -rbencode -e "puts BEncode.load(STDIN).inspect"
+        #echo "curl ${OPTS[*]} '$url'"
+        echo
 
+    done < <(find . -maxdepth 1 -type f -name '*.torrent' -print0)
+    __ranonce__=1
 done
