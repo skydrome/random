@@ -86,7 +86,7 @@ def sysinfo(word, word_eol, userdata) -> None:
     section = word[1] if len(word) > 1 else "all"
 
     if HEXCHAT and section in ("all", "version", "hexchat"):
-        hexchat.command(f"say \017-\002Hexchat {hexchat.get_info('version')}-\002")
+        hexchat.command(f"say \017-\002ZoiteChat {hexchat.get_info('version')}-\002")
 
     if platform.system() == "Windows":
         # Vbox needs: VBoxManage setextradata "vm name" "VBoxInternal/Devices/pcbios/0/Config/DmiExposeMemoryTable" 1
@@ -170,13 +170,11 @@ def sysinfo(word, word_eol, userdata) -> None:
         # Linux
         import subprocess
 
+        gpu_name = subprocess.run(["glxinfo", "-B"], text=True, stdout=subprocess.PIPE, timeout=5).stdout
         try:
-            gpu_name = subprocess.run(["glxinfo", "-B"], text=True, stdout=subprocess.PIPE, timeout=5).stdout
             gpu_name = [x.split(":")[1] for x in gpu_name.split("\n") if "OpenGL renderer string" in x][0].strip()
         except IndexError:
             gpu_name = "None"
-        except FileNotFoundError:
-            raise SystemExit("Not Found: glxinfo")
 
         if section in ("all", "os"):
             os_info = platform.uname()
@@ -186,16 +184,14 @@ def sysinfo(word, word_eol, userdata) -> None:
         if section in ("all", "cpu"):
             freq = psutil.cpu_freq()
             cores = psutil.cpu_count(logical=False)
-            # threads = psutil.cpu_count()
+            threads = psutil.cpu_count()
 
+            cpu_name = subprocess.run(["lscpu"], text=True, stdout=subprocess.PIPE, timeout=5).stdout
             try:
-                cpu_name = subprocess.run(["lscpu"], text=True, stdout=subprocess.PIPE, timeout=5).stdout
                 cpu_name = [x.split(":")[1] for x in cpu_name.split("\n") if "Model name:" in x][-1].strip()
                 cpu_name = cpu_name_sub.sub("", cpu_name)
             except IndexError:
                 cpu_name = None
-            except FileNotFoundError:
-                raise SystemExit("Not Found: lscpu")
 
             # try to parse ARM cpu model
             if not cpu_name or cpu_name.startswith("Cortex"):
@@ -207,7 +203,7 @@ def sysinfo(word, word_eol, userdata) -> None:
                     cpu_name = "unknown"
 
             header = "   cpu" if section == "all" else "cpu"
-            _print(f"say \017\002{header}\002: {cpu_name} {cores} Core • {freq.min:.0f}\00314→\017{freq.max:.0f}\00314MHz\003  \002gpu\002: {gpu_name}")
+            _print(f"say \017\002{header}\002: {cpu_name} {cores}C/{threads}T • {freq.current:.0f}\00314MHz\003/{freq.max:.0f}\00314MHz\003  \002gpu\002: {gpu_name}")
 
         if section in ("gpu"):
             header = "   gpu" if section == "all" else "gpu"
@@ -267,10 +263,10 @@ def sysinfo(word, word_eol, userdata) -> None:
         try:
             from librouteros import connect
 
-            api = connect(host=router["host"], username=router["user"], password=router["pass"])
-            health = tuple(api(cmd="/system/health/print"))
+            api = connect(host=router["host"], username=router["user"], password=router["pass"], encoding='UTF-8')
+            health = tuple(api.path("system", "health"))
             voltage, temp = health[0]["value"], health[1]["value"]
-            resource = tuple(api(cmd="/system/resource/print"))[0]
+            resource = tuple(api.path("system", "resource"))[0]
             model, firmware = (resource["board-name"].split("+")[0], resource["version"].split(" ")[0])
             mem_total, mem_free = resource["total-memory"], resource["free-memory"]
             load = resource["cpu-load"]
